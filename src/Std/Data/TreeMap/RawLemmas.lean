@@ -161,4 +161,38 @@ theorem size_insertIfNew_le [TransCmp cmp] (h : t.WF) {k : α} {v : β} :
     (t.insertIfNew k v).size ≤ t.size + 1 :=
   DTreeMap.Raw.size_insertIfNew_le h
 
+-- @[simp]
+-- theorem get?_empty [TransCmp cmp] [LawfulEqCmp cmp] {a : α} : (empty : Raw α β cmp).get? a = none :=
+--   DTreeMap.Raw.get?_empty
+
+-- theorem get?_of_isEmpty [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {a : α} :
+--     t.isEmpty = true → t.get? a = none :=
+--   DTreeMap.Raw.get?_of_isEmpty h
+
+-- theorem get?_insert [TransCmp cmp] (h : t.WF) {a k : α} {v : β} :
+--     (t.insert k v).get? a =
+--       if h : cmp k a == .eq then some v else t.get? a :=
+--   DTreeMap.Raw.get?_insertSlow h.out
+
+-- theorem get?_insert_self [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {k : α} {v : β} :
+--     (t.insert k v).get? k = some v :=
+--   DTreeMap.Raw.get?_insertSlow_self h
+
+-- theorem contains_eq_isSome_get? [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {a : α} :
+--     t.contains a = (t.get? a).isSome :=
+--   DTreeMap.Raw.contains_eq_isSome_get? h
+
+-- theorem get?_eq_none [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {a : α} :
+--     t.contains a = false → t.get? a = none :=
+--   DTreeMap.Raw.get?_eq_none h
+
+-- theorem get?_erase [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {k a : α} :
+--     (t.erase k).get? a = if cmp k a == .eq then none else t.get? a :=
+--   DTreeMap.Raw.get?_eraseSlow h
+
+-- theorem get?_erase_self [TransCmp cmp] [LawfulEqCmp cmp] (h : t.WF) {k : α} :
+--     (t.erase k).get? k = none :=
+--   DTreeMap.Raw.get?_eraseSlow_self h
+
+
 end Std.TreeMap.Raw

@@ -125,6 +125,10 @@ def containsThenInsertIfNew (t : Raw α β cmp) (a : α) (b : β) :
   let p := t.inner.containsThenInsertIfNew a b
   (p.1, ⟨p.2⟩)
 
+@[inline, inherit_doc DTreeMap.Raw.get?]
+def get? [LawfulEqCmp cmp] (t : Raw α β cmp) (a : α) : Option β :=
+  t.inner.get? a
+
 instance : Membership α (Raw α β cmp) where
   mem m a := m.contains a
 

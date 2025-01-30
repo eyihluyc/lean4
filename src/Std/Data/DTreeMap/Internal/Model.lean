@@ -198,9 +198,16 @@ def updateCell [Ord α] (k : α) (f : Cell α β (compare k) → Cell α β (com
 /--
 Model implementation of the `contains` function.
 Internal implementation detail of the tree map
- -/
+-/
 def containsₘ [Ord α] (k : α) (l : Impl α β) : Bool :=
   applyCell k l fun c _ => c.contains
+
+/--
+Model implementation of the `get?` function.
+Internal implementation detail of the tree map
+-/
+def get?ₘ [Ord α] [OrientedOrd α] [LawfulEqOrd α] (k : α) (l : Impl α β) : Option (β k) :=
+  applyCell k l fun c _ => c.get?
 
 /--
 Model implementation of the `insert` function.
@@ -224,6 +231,19 @@ def insertIfNewₘ [Ord α] (k : α) (v : β k) (l : Impl α β) (h : l.Balanced
   updateCell k (fun
     | ⟨.none, _⟩ => .of k v
     | c => c) l h |>.impl
+
+namespace Const
+
+variable {β : Type v}
+
+/--
+Model implementation of the `get?` function.
+Internal implementation detail of the tree map
+-/
+def get?ₘ [Ord α] (k : α) (l : Impl α (fun _ => β)) : Option β :=
+  applyCell k l fun c _ => Cell.Const.get? c
+
+end Const
 
 /-!
 ## Helper theorems for reasoning with key-value pairs
@@ -252,6 +272,15 @@ theorem contains_eq_containsₘ [Ord α] (k : α) (l : Impl α β) :
   · simp only [contains, applyCell]
     split <;> split <;> simp_all
   · simp [contains, applyCell]
+
+theorem get?_eq_get?ₘ [Ord α] [OrientedOrd α] [LawfulEqOrd α] (k : α) (l : Impl α β) :
+    l.get? k = l.get?ₘ k := by
+  simp only [get?ₘ]
+  induction l
+  · simp only [applyCell, get?]
+    split <;> rename_i hcmp₁ <;> split <;> rename_i hcmp₂ <;> try (simp [hcmp₁] at hcmp₂; done)
+    all_goals simp_all [Cell.get?, Cell.ofEq]
+  · simp [get?, applyCell]
 
 theorem balanceL_eq_balance {k : α} {v : β k} {l r : Impl α β} {hlb hrb hlr} :
     balanceL k v l r hlb hrb hlr = balance k v l r hlb hrb (Or.inl hlr.erase) := by
@@ -415,6 +444,21 @@ theorem snd_containsThenInsertIfNewSlow_eq_insertIfNewSlow [Ord α] (t : Impl α
     (t.containsThenInsertIfNewSlow a b).2 = t.insertIfNewSlow a b:= by
   rw [containsThenInsertIfNewSlow, insertIfNewSlow]
   split <;> rfl
+
+namespace Const
+
+variable {β : Type v}
+
+theorem get?_eq_get?ₘ [Ord α] (k : α) (l : Impl α (fun _ => β)) :
+    Const.get? k l = Const.get?ₘ k l := by
+  simp only [Const.get?ₘ]
+  induction l
+  · simp only [applyCell, Const.get?]
+    split <;> rename_i hcmp₁ <;> split <;> rename_i hcmp₂ <;> try (simp [hcmp₁] at hcmp₂; done)
+    all_goals simp_all [Cell.Const.get?, Cell.ofEq]
+  · simp [Const.get?, applyCell]
+
+end Const
 
 end Impl
 

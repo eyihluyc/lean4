@@ -11,18 +11,24 @@ set_option linter.missingDocs true
 
 universe u
 
+/-- The `LawfulEqCmp cmp` typeclass says `cmp a b = .eq` if and only if the logical equality
+`a = b` holds. -/
+class LawfulEqCmp {α : Type u} (cmp : α → α → Ordering) extends ReflCmp cmp : Prop where
+  /-- If two values compare equal, then they are logically equal. -/
+  eq_of_compare {a b : α} : cmp a b == .eq → a = b
+
 /--
 The `LawfulEqOrd` typeclass says that `compare a b = .eq` if and only if the logical equality
 `a = b` holds.
 -/
-class LawfulEqOrd (α : Type u) [Ord α] extends ReflOrd α : Prop where
-  /-- If two values compare equal, then they are logically equal. -/
-  eq_of_compare {a b : α} : compare a b = .eq → a = b
+abbrev LawfulEqOrd (α : Type u) [Ord α] := LawfulEqCmp (compare : α → α → Ordering)
 
-export LawfulEqOrd (eq_of_compare)
-
-variable {α : Type u} [Ord α] [LawfulEqOrd α]
+variable {α : Type u} {cmp : α → α → Ordering} [LawfulEqCmp cmp]
 
 @[simp]
-theorem compare_eq_iff_eq {a b : α} : compare a b = .eq ↔ a = b :=
-  ⟨LawfulEqOrd.eq_of_compare, by rintro rfl; simp⟩
+theorem compare_eq_iff_eq {a b : α} : cmp a b = .eq ↔ a = b :=
+  ⟨LawfulEqCmp.eq_of_compare ∘ beq_of_eq, by rintro rfl; simp⟩
+
+@[simp]
+theorem compare_beq_iff_eq {a b : α} : cmp a b == .eq ↔ a = b :=
+  ⟨LawfulEqCmp.eq_of_compare, by rintro rfl; simp⟩

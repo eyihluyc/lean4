@@ -320,10 +320,9 @@ theorem ordered_updateAtKey [Ord α] [TransOrd α] {k : α}
 
 /-- Internal function to derive a `BEq` instance from an `Ord` instance in order to connect the
 verification machinery for tree maps to the verification machinery for hash maps. -/
+@[local instance]
 def beqOfOrd [Ord α] : BEq α where
   beq a b := compare a b == .eq
-
-attribute [local instance] beqOfOrd
 
 @[local simp]
 theorem beq_eq [Ord α] {a b : α} : (a == b) = (compare a b == .eq) :=
@@ -334,6 +333,11 @@ theorem equivBEq_of_transOrd [Ord α] [TransOrd α] : EquivBEq α where
   symm {a b} h := by simp_all [OrientedCmp.eq_comm]
   trans h₁ h₂ := by simp_all only [beq_eq, beq_iff_eq]; exact TransCmp.eq_trans h₁ h₂
   refl := by simp
+
+@[local instance]
+theorem lawfulBEq_of_lawfulEqOrd [Ord α] [LawfulEqOrd α] : LawfulBEq α where
+  eq_of_beq hbeq := by simp_all
+  rfl := by simp
 
 open Std.Internal.List
 
@@ -563,6 +567,50 @@ theorem apply_containsₘ [Ord α] [TransOrd α] {k : α} {l : Impl α β} (hlo 
 theorem apply_contains [Ord α] [TransOrd α] {k : α} {l : Impl α β} (hlo : l.Ordered) :
     l.contains k = containsKey k l.toListModel := by
   rw [contains_eq_containsₘ, apply_containsₘ hlo]
+
+/-!
+''' `get?`
+-/
+
+theorem apply_get?ₘ [Ord α] [TransOrd α] [LawfulEqOrd α] {k : α} {t : Impl α β} (hto : t.Ordered) :
+    t.get?ₘ k = getValueCast? k t.toListModel := by
+  rw [get?ₘ, applyCell_eq_apply_toListModel hto (fun l _ => getValueCast? k l)]
+  · rintro ⟨(_|p), hp⟩ -
+    · simp [Cell.get?]
+    · simp only [Cell.get?, Option.toList_some, getValueCast?, beq_eq,
+        compare_eq_iff_eq, Option.some_eq_dite_none_right, exists_prop, and_true]
+      simp [OrientedCmp.eq_symm (hp p rfl)]
+  · exact fun l₁ l₂ h => getValueCast?_of_perm
+  · exact fun l₁ l₂ h => getValueCast?_append_of_containsKey_eq_false
+
+theorem apply_get? [Ord α] [TransOrd α] [LawfulEqOrd α] {k : α} {t : Impl α β} (hto : t.Ordered) :
+    t.get? k = getValueCast? k t.toListModel := by
+  rw [get?_eq_get?ₘ, apply_get?ₘ hto]
+
+namespace Const
+
+variable {β : Type v}
+
+/-!
+''' `get?`
+-/
+
+theorem apply_get?ₘ [Ord α] [TransOrd α] {k : α} {t : Impl α (fun _ => β)} (hto : t.Ordered) :
+    get?ₘ k t = getValue? k t.toListModel := by
+  rw [get?ₘ, applyCell_eq_apply_toListModel hto (fun l _ => getValue? k l)]
+  · rintro ⟨(_|p), hp⟩ -
+    · simp [Cell.Const.get?]
+    · simp only [Cell.Const.get?, Option.toList_some, getValue?, beq_eq,
+        compare_eq_iff_eq, Option.some_eq_dite_none_right, exists_prop, and_true]
+      simp [OrientedCmp.eq_symm (hp p rfl)]
+  · exact fun l₁ l₂ h => getValue?_of_perm
+  · exact fun l₁ l₂ h => getValue?_append_of_containsKey_eq_false
+
+theorem apply_get? [Ord α] [TransOrd α] {k : α} {t : Impl α (fun _ => β)} (hto : t.Ordered) :
+    get? k t = getValue? k t.toListModel := by
+  rw [get?_eq_get?ₘ, apply_get?ₘ hto]
+
+end Const
 
 /-!
 ## Verification of modification operations

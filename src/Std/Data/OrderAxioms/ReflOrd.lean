@@ -11,11 +11,14 @@ set_option linter.missingDocs true
 
 universe u
 
-/-- A typeclasses for ordered types for which `compare a a = .eq` for all `a`. -/
-class ReflOrd (α : Type u) [Ord α] : Prop where
+/-- A typeclasses for comparison functions `cmp` for which `cmp a a = .eq` for all `a`. -/
+class ReflCmp {α : Type u} (cmp : α → α → Ordering) : Prop where
   /-- Comparison is reflexive. -/
-  compare_self {a : α} : compare a a = .eq
+  compare_self {a : α} : cmp a a = .eq
 
-export ReflOrd (compare_self)
+/-- A typeclasses for ordered types for which `compare a a = .eq` for all `a`. -/
+class ReflOrd (α : Type u) [Ord α] extends ReflCmp (compare : α → α → Ordering) : Prop
+
+export ReflCmp (compare_self)
 
 attribute [simp] compare_self

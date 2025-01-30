@@ -176,6 +176,26 @@ Equivalent to (but potentially faster than) calling `contains` followed by `inse
   let p := t.inner.containsThenInsertIfNewSlow a b
   (p.1, ⟨p.2⟩)
 
+/--
+Tries to retrieve the mapping for the given key, returning `none` if no such mapping is present.
+
+Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
+-/
+@[inline] def get? [LawfulEqCmp cmp] (t : Raw α β cmp) (a : α) : Option (β a) :=
+  letI : Ord α := ⟨cmp⟩; t.inner.get? a
+
+namespace Const
+
+/--
+Tries to retrieve the mapping for the given key, returning `none` if no such mapping is present.
+
+Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
+-/
+@[inline] def get? (t : Raw α β cmp) (a : α) : Option (β a) :=
+  letI : Ord α := ⟨cmp⟩; get? t.inner a -- TODO: Which order of arguments is correct?
+
+end Const
+
 instance : Membership α (Raw α β cmp) where
   mem m a := m.contains a
 

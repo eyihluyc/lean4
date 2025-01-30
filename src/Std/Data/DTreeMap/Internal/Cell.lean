@@ -69,8 +69,36 @@ theorem contains_ofEq [Ord α] {k : α → Ordering} {k' : α} {v' : β k'} {h} 
 @[simp]
 theorem contains_empty [Ord α] {k : α → Ordering} : (Cell.empty : Cell α β k).contains = false := rfl
 
+/-- Internal implementation detail of the tree map -/
+def get? [Ord α] [OrientedOrd α] [LawfulEqOrd α] {k : α} (c : Cell α β (compare k)) : Option (β k) :=
+  match h : c.inner with
+  | none => none
+  | some p => some (cast (congrArg β (compare_eq_iff_eq.mp (c.property _ h)).symm) p.2)
+
+@[simp]
+theorem get?_empty [Ord α] [OrientedOrd α] [LawfulEqOrd α] {k : α} :
+    (Cell.empty : Cell α β (compare k)).get? = none :=
+  rfl
+
 theorem ext [Ord α] {k : α → Ordering} {c c' : Cell α β k} : c.inner = c'.inner → c = c' := by
   cases c; cases c'; simp
+
+namespace Const
+
+variable {β : Type v}
+
+/-- Internal implementation detail of the tree map -/
+def get? [Ord α] {k : α} (c : Cell α (fun _ => β) (compare k)) : Option β :=
+  match c.inner with
+  | none => none
+  | some p => some p.2
+
+@[simp]
+theorem get?_empty [Ord α] {k : α} :
+    get? (Cell.empty : Cell α (fun _ => β) (compare k)) = none :=
+  rfl
+
+end Const
 
 end Cell
 

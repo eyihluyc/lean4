@@ -39,7 +39,7 @@ scoped macro "empty" : tactic => `(tactic| { intros; simp_all [List.isEmpty_iff]
 open Lean
 
 private def queryNames : Array Name :=
-  #[``apply_isEmpty, ``apply_contains, ``apply_size]
+  #[``apply_isEmpty, ``apply_contains, ``apply_size, ``apply_get?, ``Const.apply_get?]
 
 private def modifyNames : Array Name :=
   #[``toListModel_insert, ``toListModel_insertSlow, ``toListModel_erase, ``toListModel_eraseSlow,
@@ -71,6 +71,7 @@ macro_rules
 
 attribute [local instance] beqOfOrd
 attribute [local instance] equivBEq_of_transOrd
+attribute [local instance] lawfulBEq_of_lawfulEqOrd
 
 theorem isEmpty_empty : isEmpty (empty : Impl α β) := by
   simp [Impl.apply_isEmpty]
@@ -324,6 +325,112 @@ theorem size_insertIfNew_le [TransOrd α] (h : t.WF) {k : α} {v : β k} :
 theorem size_insertIfNewSlow_le [TransOrd α] (h : t.WF) {k : α} {v : β k} :
     (t.insertIfNewSlow k v).size ≤ t.size + 1 := by
   simp_to_model using List.length_insertEntryIfNew_le
+
+@[simp]
+theorem get?_empty [LawfulEqOrd α] {a : α} : (empty : Impl α β).get? a = none := by
+  simp [empty, get?]
+
+theorem get?_of_isEmpty [TransOrd α] [LawfulEqOrd α] (h : t.WF) {a : α} :
+    t.isEmpty = true → t.get? a = none := by
+  simp_to_model; empty
+
+theorem get?_insert [TransOrd α] [LawfulEqOrd α] (h : t.WF) {a k : α} {v : β k} :
+    (t.insert k v h.balanced).impl.get? a =
+      if h : compare k a == .eq then some (cast (congrArg β (compare_beq_iff_eq.mp h)) v) else t.get? a := by
+  simp_to_model using List.getValueCast?_insertEntry
+
+theorem get?_insertSlow [TransOrd α] [LawfulEqOrd α] (h : t.WF) {a k : α} {v : β k} :
+    (t.insertSlow k v).get? a =
+      if h : compare k a == .eq then some (cast (congrArg β (compare_beq_iff_eq.mp h)) v) else t.get? a := by
+  simp_to_model using List.getValueCast?_insertEntry
+
+theorem get?_insert_self [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k : α} {v : β k} :
+    (t.insert k v h.balanced).impl.get? k = some v := by
+  simp_to_model using List.getValueCast?_insertEntry_self
+
+theorem get?_insertSlow_self [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k : α} {v : β k} :
+    (t.insertSlow k v).get? k = some v := by
+  simp_to_model using List.getValueCast?_insertEntry_self
+
+theorem contains_eq_isSome_get? [TransOrd α] [LawfulEqOrd α] (h : t.WF) {a : α} :
+    t.contains a = (t.get? a).isSome := by
+  simp_to_model using List.containsKey_eq_isSome_getValueCast?
+
+theorem get?_eq_none [TransOrd α] [LawfulEqOrd α] (h : t.WF) {a : α} :
+    t.contains a = false → t.get? a = none := by
+  simp_to_model using List.getValueCast?_eq_none
+
+theorem get?_erase [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k a : α} :
+    (t.erase k h.balanced).impl.get? a = if k == a then none else t.get? a := by
+  simp_to_model using List.getValueCast?_eraseKey
+
+theorem get?_eraseSlow [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k a : α} :
+    (t.eraseSlow k).get? a = if k == a then none else t.get? a := by
+  simp_to_model using List.getValueCast?_eraseKey
+
+theorem get?_erase_self [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k : α} :
+    (t.erase k h.balanced).impl.get? k = none := by
+  simp_to_model using List.getValueCast?_eraseKey_self
+
+theorem get?_eraseSlow_self [TransOrd α] [LawfulEqOrd α] (h : t.WF) {k : α} :
+    (t.eraseSlow k).get? k = none := by
+  simp_to_model using List.getValueCast?_eraseKey_self
+
+namespace Const
+
+variable {β : Type v} {t : Impl α (fun _ => β)}
+
+@[simp]
+theorem get?_empty {a : α} : get? a (empty : Impl α (fun _ => β)) = none := by
+  simp [empty, get?]
+
+theorem get?_of_isEmpty [TransOrd α] (h : t.WF) {a : α} :
+    t.isEmpty = true → get? a t = none := by
+  simp_to_model; empty
+
+theorem get?_insert [TransOrd α] (h : t.WF) {a k : α} {v : β} :
+    get? a (t.insert k v h.balanced).impl =
+      if compare k a == .eq then some v else get? a t := by
+  simp_to_model using List.getValue?_insertEntry
+
+theorem get?_insertSlow [TransOrd α] (h : t.WF) {a k : α} {v : β} :
+    get? a (t.insertSlow k v) =
+      if compare k a == .eq then some v else get? a t := by
+  simp_to_model using List.getValue?_insertEntry
+
+theorem get?_insert_self [TransOrd α] (h : t.WF) {k : α} {v : β} :
+    get? k (t.insert k v h.balanced).impl = some v := by
+  simp_to_model using List.getValue?_insertEntry_self
+
+theorem get?_insertSlow_self [TransOrd α] (h : t.WF) {k : α} {v : β} :
+    get? k (t.insertSlow k v) = some v := by
+  simp_to_model using List.getValue?_insertEntry_self
+
+theorem contains_eq_isSome_get? [TransOrd α] (h : t.WF) {a : α} :
+    t.contains a = (get? a t).isSome := by
+  simp_to_model using List.containsKey_eq_isSome_getValue?
+
+theorem get?_eq_none [TransOrd α] (h : t.WF) {a : α} :
+    t.contains a = false → get? a t = none := by
+  simp_to_model using List.getValue?_eq_none.2
+
+theorem get?_erase [TransOrd α] (h : t.WF) {k a : α} :
+    get? a (t.erase k h.balanced).impl = if k == a then none else get? a t := by
+  simp_to_model using List.getValue?_eraseKey
+
+theorem get?_eraseSlow [TransOrd α] (h : t.WF) {k a : α} :
+    get? a (t.eraseSlow k) = if k == a then none else get? a t := by
+  simp_to_model using List.getValue?_eraseKey
+
+theorem get?_erase_self [TransOrd α] (h : t.WF) {k : α} :
+    get? k (t.erase k h.balanced).impl = none := by
+  simp_to_model using List.getValue?_eraseKey_self
+
+theorem get?_eraseSlow_self [TransOrd α] (h : t.WF) {k : α} :
+    get? k (t.eraseSlow k) = none := by
+  simp_to_model using List.getValue?_eraseKey_self
+
+end Const
 
 end Std.DTreeMap.Internal.Impl
 

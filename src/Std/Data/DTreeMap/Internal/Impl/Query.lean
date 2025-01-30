@@ -5,6 +5,7 @@ Authors: Markus Himmel
 -/
 prelude
 import Std.Data.DTreeMap.Internal.Impl.Def
+import Std.Data.OrderAxioms.LawfulEqOrd
 
 /-!
 # Low-level implementation of the size-bounded tree
@@ -54,3 +55,27 @@ def isEmpty (t : Impl α β) : Bool :=
   match t with
   | .leaf => true
   | .inner _ _ _ _ _ => false
+
+/-- Returns the value for the key `k`, or `none` if such a key does not exist. -/
+def get? [Ord α] [LawfulEqOrd α] (k : α) (t : Impl α β) : Option (β k) :=
+  match t with
+  | .leaf => none
+  | .inner _ k' v' l r =>
+    match h : compare k k' with
+    | .lt => get? k l
+    | .gt => get? k r
+    | .eq => some (cast (congrArg β (compare_eq_iff_eq.mp h).symm) v')
+
+namespace Const
+
+/-- Returns the value for the key `k`, or `none` if such a key does not exist. -/
+def get? [Ord α] (k : α) (t : Impl α (fun _ => δ)) : Option δ :=
+  match t with
+  | .leaf => none
+  | .inner _ k' v' l r =>
+    match compare k k' with
+    | .lt => get? k l
+    | .gt => get? k r
+    | .eq => some v'
+
+end Const
