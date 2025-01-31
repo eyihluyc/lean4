@@ -73,6 +73,10 @@ instance : EmptyCollection (TreeMap α β cmp) where
 def isEmpty (t : TreeMap α β cmp) : Bool :=
   t.inner.isEmpty
 
+@[inline]
+def isSingleton (t : TreeMap α β cmp) : Bool :=
+  t.inner.isSingleton
+
 @[inline, inherit_doc DTreeMap.insert]
 def insert (l : TreeMap α β cmp) (a : α) (b : β) : TreeMap α β cmp :=
   ⟨l.inner.insert a b⟩
@@ -91,7 +95,6 @@ def erase (t : TreeMap α β cmp) (a : α) : TreeMap α β cmp :=
 
 @[inline, inherit_doc DTreeMap.containsThenInsert]
 def containsThenInsert (t : TreeMap α β cmp) (a : α) (b : β) : Bool × TreeMap α β cmp :=
-  letI : Ord α := ⟨cmp⟩
   let p := t.inner.containsThenInsert a b
   (p.1, ⟨p.2⟩)
 
@@ -106,14 +109,41 @@ def containsThenInsertIfNew (t : TreeMap α β cmp) (a : α) (b : β) :
   (p.1, ⟨p.2⟩)
 
 @[inline, inherit_doc DTreeMap.get?]
-def get? [Ord α] [LawfulEqOrd α] (t : TreeMap α β cmp) (a : α) : Option β :=
-  t.inner.get? a
+def get? (t : TreeMap α β cmp) (a : α) : Option β :=
+  DTreeMap.Const.get? t.inner a
+
+@[inline]
+def get! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
+  DTreeMap.Const.get! l.inner a
 
 instance : Membership α (TreeMap α β cmp) where
   mem m a := m.contains a
 
 instance {m : TreeMap α β cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
+
+universe w in
+@[inline] def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : α → β → γ → m (ForInStep γ)) (init : γ) (b : TreeMap α β cmp) : m γ :=
+  b.inner.forIn (fun a b c => f a b c) init
+
+universe w in
+instance {m : Type w → Type w} : ForIn m (TreeMap α β cmp) (α × β) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
+
+@[inline] def any (l : TreeMap α β cmp) (p : α → β → Bool) : Bool :=
+  l.inner.any p
+universe w in
+@[inline] def foldl {γ : Type w}
+    (f : γ → α → β → γ) (init : γ) (b : TreeMap α β cmp) : γ :=
+  b.inner.foldl f init
+
+instance : Repr (TreeMap α β cmp) where
+  reprPrec _ _ := Format.nil
+
+/-- Returns a `List` of the key/value pairs in order. -/
+@[specialize] def toList (t : TreeMap α β cmp) : List (α × β) :=
+  Std.DTreeMap.Internal.Impl.Const.toList t.inner.inner
 
 end TreeMap
 

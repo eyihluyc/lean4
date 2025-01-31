@@ -71,6 +71,10 @@ namespace DTreeMap
 def isEmpty (t : DTreeMap α β cmp) : Bool :=
   t.inner.isEmpty
 
+@[inline]
+def isSingleton (t : DTreeMap α β cmp) : Bool :=
+  t.inner.isSingleton
+
 @[inline, inherit_doc Raw.empty]
 def empty : DTreeMap α β cmp :=
   letI : Ord α := ⟨cmp⟩; ⟨Internal.Impl.empty, .empty⟩
@@ -109,14 +113,62 @@ def containsThenInsertIfNew (t : DTreeMap α β cmp) (a : α) (b : β a) :
   (p.1, ⟨p.2.impl, t.wf.containsThenInsertIfNew⟩)
 
 @[inline, inherit_doc Raw.get?]
-def get? [Ord α] [LawfulEqOrd α] (t : DTreeMap α β cmp) (a : α) : Option (β a) :=
+def get? [LawfulEqCmp cmp] (t : DTreeMap α β cmp) (a : α) : Option (β a) :=
+  letI : Ord α := ⟨cmp⟩
   t.inner.get? a
+
+@[inline] def get! [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) [Inhabited (β a)]  : β a :=
+  letI : Ord α := ⟨cmp⟩
+  l.inner.get! a
+
+namespace Const
+open Internal (Impl)
+
+variable {β : Type v}
+
+@[inline, inherit_doc Raw.get?]
+def get? (t : DTreeMap α (fun _ => β) cmp) (a : α) : Option β :=
+  letI : Ord α := ⟨cmp⟩
+  Impl.Const.get? a t.inner
+
+@[inline]
+def get! (l : DTreeMap α (fun _ => β) cmp) (a : α) [Inhabited β]  : β :=
+  letI : Ord α := ⟨cmp⟩
+  Impl.Const.get! a l.inner
+
+end Const
+
+universe w in
+@[inline] def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : (a : α) → β a → γ → m (ForInStep γ)) (init : γ) (b : DTreeMap α β cmp) : m γ :=
+  b.inner.forIn (fun c a b => f a b c) init
+
+universe w in
+instance {m : Type w → Type w} : ForIn m (DTreeMap α β cmp) ((a : α) × β a) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
+
+@[inline] def any (l : DTreeMap α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
+  for ⟨a, b⟩ in l do
+    if p a b then return true
+  return false
+
+universe w in
+@[inline] def foldl {γ : Type w}
+    (f : γ → (a : α) → β a → γ) (init : γ) (b : DTreeMap α β cmp) : γ :=
+  b.inner.foldl f init
+
+/-- Returns a `List` of the key/value pairs in order. -/
+@[specialize] def toList (t : DTreeMap α β cmp) : List ((a : α) × β a) :=
+  t.inner.toList
 
 instance : Membership α (DTreeMap α β cmp) where
   mem m a := m.contains a
 
 instance {m : DTreeMap α β cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
+
+instance : Repr (DTreeMap α β cmp) where
+  reprPrec _ _ := Format.nil
 
 end DTreeMap
 
