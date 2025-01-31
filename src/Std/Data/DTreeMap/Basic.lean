@@ -79,6 +79,8 @@ def isSingleton (t : DTreeMap α β cmp) : Bool :=
 def empty : DTreeMap α β cmp :=
   letI : Ord α := ⟨cmp⟩; ⟨Internal.Impl.empty, .empty⟩
 
+instance : EmptyCollection (DTreeMap α β cmp) := ⟨empty⟩
+
 @[inline, inherit_doc Raw.insert]
 def insert (l : DTreeMap α β cmp) (a : α) (b : β a) : DTreeMap α β cmp :=
   letI : Ord α := ⟨cmp⟩; ⟨(l.inner.insert a b l.wf.balanced).impl, .insert l.wf⟩
@@ -166,6 +168,8 @@ instance : Membership α (DTreeMap α β cmp) where
 
 instance {m : DTreeMap α β cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
+
+instance : Inhabited (DTreeMap α β cmp) := ⟨empty⟩
 
 instance : Repr (DTreeMap α β cmp) where
   reprPrec _ _ := Format.nil

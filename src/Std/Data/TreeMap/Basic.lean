@@ -141,6 +141,11 @@ universe w in
 instance : Repr (TreeMap α β cmp) where
   reprPrec _ _ := Format.nil
 
+instance : Inhabited (TreeMap α β cmp) := ⟨empty⟩
+
+instance : Repr (TreeMap α β cmp) where
+  reprPrec _ _ := Format.nil
+
 /-- Returns a `List` of the key/value pairs in order. -/
 @[specialize] def toList (t : TreeMap α β cmp) : List (α × β) :=
   Std.DTreeMap.Internal.Impl.Const.toList t.inner.inner
