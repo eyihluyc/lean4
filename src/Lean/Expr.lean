@@ -9,8 +9,10 @@ import Lean.Data.KVMap
 import Lean.Data.SMap
 import Lean.Level
 import Std.Data.HashSet.Basic
+import Std.Data.TreeMap.Basic
 
 namespace Lean
+open Std
 
 /-- Literal values for `Expr`. -/
 inductive Literal where
@@ -251,12 +253,12 @@ def FVarIdHashSet := Std.HashSet FVarId
 /--
 A mapping from free variable identifiers to values of type `α`.
 This is a persistent data structure implemented using red-black trees. -/
-def FVarIdMap (α : Type) := RBMap FVarId α (Name.quickCmp ·.name ·.name)
+def FVarIdMap (α : Type) := TreeMap FVarId α (Name.quickCmp ·.name ·.name)
 
 def FVarIdMap.insert (s : FVarIdMap α) (fvarId : FVarId) (a : α) : FVarIdMap α :=
-  RBMap.insert s fvarId a
+  TreeMap.insert s fvarId a
 
-instance : EmptyCollection (FVarIdMap α) := inferInstanceAs (EmptyCollection (RBMap ..))
+instance : EmptyCollection (FVarIdMap α) := inferInstanceAs (EmptyCollection (TreeMap ..))
 
 instance : Inhabited (FVarIdMap α) where
   default := {}
