@@ -13,6 +13,7 @@ open Lean
 
 namespace Lake
 open Lean (Name NameMap)
+open Std (TreeMap DTreeMap)
 
 /--
 First tries to convert a string into a legal name.
@@ -21,22 +22,22 @@ If that fails, defaults to making it a simple name (e.g., `Lean.Name.mkSimple`).
 def stringToLegalOrSimpleName (s : String) : Name :=
   if s.toName.isAnonymous then Lean.Name.mkSimple s else s.toName
 
-@[inline] def NameMap.empty : NameMap α := RBMap.empty
+@[inline] def NameMap.empty : NameMap α := TreeMap.empty
 
 instance : ForIn m (NameMap α) (Name × α) where
-  forIn self init f := self.forIn init f
+  forIn self init f := self.forIn (fun n a b => f (n, a) b) init
 
-instance : Coe (RBMap Name α Name.quickCmp) (NameMap α) := ⟨id⟩
+instance : Coe (TreeMap Name α Name.quickCmp) (NameMap α) := ⟨id⟩
 
 abbrev OrdNameMap α := RBArray Name α Name.quickCmp
 @[inline] def OrdNameMap.empty : OrdNameMap α := RBArray.empty
 @[inline] def mkOrdNameMap (α : Type) : OrdNameMap α := RBArray.empty
 
-abbrev DNameMap α := DRBMap Name α Name.quickCmp
-@[inline] def DNameMap.empty : DNameMap α := DRBMap.empty
+abbrev DNameMap α := DTreeMap Name α Name.quickCmp
+@[inline] def DNameMap.empty : DNameMap α := DTreeMap.empty
 
 instance [ToJson α] : ToJson (NameMap α) where
-  toJson m := Json.obj <| m.fold (fun n k v => n.insert compare k.toString (toJson v)) .leaf
+  toJson m := Json.obj <| m.foldl (fun n k v => n.insert compare k.toString (toJson v)) .leaf
 
 instance [FromJson α] : FromJson (NameMap α) where
   fromJson? j := do

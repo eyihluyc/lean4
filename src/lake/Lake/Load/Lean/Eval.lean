@@ -80,7 +80,7 @@ def Package.loadFromEnv
     let fn ← IO.ofExcept <| evalConstCheck env opts ScriptFn ``ScriptFn scriptName
     return {name, fn, doc? := ← findDocString? env scriptName : Script}
   let defaultScripts ← defaultScriptAttr.getAllEntries env |>.mapM fun name =>
-    if let some script := scripts.find? name then pure script else
+    if let some script := scripts.get? name then pure script else
       error s!"package is missing script `{name}` marked as a default"
   let leanLibConfigs ← IO.ofExcept <| mkOrdTagMap env leanLibAttr fun name =>
     evalConstCheck env opts LeanLibConfig ``LeanLibConfig name
@@ -145,7 +145,7 @@ def Package.loadFromEnv
   -- Fill in the Package
   return {self with
     depConfigs, leanLibConfigs, leanExeConfigs, externLibConfigs
-    opaqueTargetConfigs, defaultTargets, scripts, defaultScripts
+    opaqueTargetConfigs, defaultTargets, scripts := ⟨scripts⟩, defaultScripts
     testDriver, lintDriver,  postUpdateHooks
   }
 

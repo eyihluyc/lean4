@@ -56,7 +56,7 @@ def PackageFacetConfig.fetchJob
 def Package.fetchFacetJob
   (name : Name) (self : Package)
 : FetchM OpaqueJob :=  do
-  let some config := (← getWorkspace).packageFacetConfigs.find? name
+  let some config := (← getWorkspace).packageFacetConfigs.get? name
     | error s!"package facet '{name}' does not exist in workspace"
   inline <| config.fetchJob self
 
@@ -79,7 +79,7 @@ def ModuleFacetConfig.fetchJob
 def Module.fetchFacetJob
   (name : Name) (self : Module)
 : FetchM OpaqueJob :=  do
-  let some config := (← getWorkspace).moduleFacetConfigs.find? name
+  let some config := (← getWorkspace).moduleFacetConfigs.get? name
     | error s!"library facet '{name}' does not exist in workspace"
   inline <| config.fetchJob self
 
@@ -109,7 +109,7 @@ def LibraryFacetConfig.fetchJob
 def LeanLib.fetchFacetJob
   (name : Name) (self : LeanLib)
 : FetchM OpaqueJob :=  do
-  let some config := (← getWorkspace).libraryFacetConfigs.find? name
+  let some config := (← getWorkspace).libraryFacetConfigs.get? name
     | error s!"library facet '{name}' does not exist in workspace"
   inline <| config.fetchJob self
 

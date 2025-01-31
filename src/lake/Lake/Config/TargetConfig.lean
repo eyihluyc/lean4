@@ -34,4 +34,4 @@ hydrate_opaque_type OpaqueTargetConfig TargetConfig pkgName name
 
 /-- Try to find a target configuration in the package with the given name . -/
 def Package.findTargetConfig? (name : Name) (self : Package) : Option (TargetConfig self.name name) :=
-  self.opaqueTargetConfigs.find? name |>.map (·.get)
+  self.opaqueTargetConfigs.get? name |>.map (·.get)

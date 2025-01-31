@@ -109,7 +109,7 @@ def elabConfigDecl
         m := m.insert fieldName {ref := id, val}
       else
         logWarningAt id m!"unknown '{.ofConstName tyName}' field '{fieldName}'"
-    let fs ← m.foldM (init := #[]) fun a k {ref, val} => withRef ref do
+    let fs ← m.foldlM (init := #[]) fun a k {ref, val} => withRef ref do
       return a.push <| ← `(Term.structInstField| $(← mkIdentFromRef k true):ident := $val)
     let ty := mkCIdentFrom (← getRef) tyName
     let declId ← id do

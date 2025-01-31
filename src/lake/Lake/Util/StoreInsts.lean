@@ -8,16 +8,20 @@ import Lake.Util.DRBMap
 import Lake.Util.RBArray
 import Lake.Util.Family
 import Lake.Util.Store
+import Std.Data.OrderAxioms.LawfulEqOrd
 
 open Lean
+open Std
 namespace Lake
 
-instance [Monad m] [EqOfCmpWrt κ β cmp] : MonadDStore κ β (StateT (DRBMap κ β cmp) m) where
-  fetch? k := return (← get).find? k
+variable {cmp : κ → κ → Ordering}
+
+instance [Monad m] [LawfulEqCmp cmp] : MonadDStore κ β (StateT (DTreeMap κ β cmp) m) where
+  fetch? k := return (← get).get? k
   store k a := modify (·.insert k a)
 
-instance [MonadLiftT (ST ω) m] [Monad m] [EqOfCmpWrt κ β cmp] : MonadDStore κ β (StateRefT' ω (DRBMap κ β cmp) m) where
-  fetch? k := return (← get).find? k
+instance [MonadLiftT (ST ω) m] [Monad m] [LawfulEqCmp cmp] : MonadDStore κ β (StateRefT' ω (DTreeMap κ β cmp) m) where
+  fetch? k := return (← get).get? k
   store k a := modify (·.insert k a)
 
 instance [Monad m] : MonadStore κ α (StateT (RBMap κ α cmp) m) where

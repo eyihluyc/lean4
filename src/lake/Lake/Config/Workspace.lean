@@ -84,11 +84,11 @@ def addPackage (pkg : Package) (self : Workspace) : Workspace :=
 
 /-- Try to find a package within the workspace with the given name. -/
 @[inline] protected def findPackage? (name : Name) (self : Workspace) : Option (NPackage name) :=
-  self.packageMap.find? name
+  self.packageMap.get? name
 
 /-- Try to find a script in the workspace with the given name. -/
 protected def findScript? (script : Name) (self : Workspace) : Option Script :=
-  self.packages.findSome? (·.scripts.find? script)
+  self.packages.findSome? (·.scripts.get? script)
 
 /-- Check if the module is local to any package in the workspace. -/
 def isLocalModule (mod : Name) (self : Workspace) : Bool :=
@@ -128,7 +128,7 @@ def addModuleFacetConfig (cfg : ModuleFacetConfig name) (self : Workspace) : Wor
 
 /-- Try to find a module facet configuration in the workspace with the given name. -/
 def findModuleFacetConfig? (name : Name) (self : Workspace) : Option (ModuleFacetConfig name) :=
-  self.moduleFacetConfigs.find? name
+  self.moduleFacetConfigs.get? name
 
 /-- Add a package facet to the workspace. -/
 def addPackageFacetConfig (cfg : PackageFacetConfig name) (self : Workspace) : Workspace :=
@@ -136,7 +136,7 @@ def addPackageFacetConfig (cfg : PackageFacetConfig name) (self : Workspace) : W
 
 /-- Try to find a package facet configuration in the workspace with the given name. -/
 def findPackageFacetConfig? (name : Name) (self : Workspace) : Option (PackageFacetConfig name) :=
-  self.packageFacetConfigs.find? name
+  self.packageFacetConfigs.get? name
 
 /-- Add a library facet to the workspace. -/
 def addLibraryFacetConfig (cfg : LibraryFacetConfig name) (self : Workspace) : Workspace :=
@@ -144,7 +144,7 @@ def addLibraryFacetConfig (cfg : LibraryFacetConfig name) (self : Workspace) : W
 
 /-- Try to find a library facet configuration in the workspace with the given name. -/
 def findLibraryFacetConfig? (name : Name) (self : Workspace) : Option (LibraryFacetConfig name) :=
-  self.libraryFacetConfigs.find? name
+  self.libraryFacetConfigs.get? name
 
 /-- The workspace's binary directories (which are added to `Path`). -/
 def binPath (self : Workspace) : SearchPath :=

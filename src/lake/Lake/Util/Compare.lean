@@ -5,6 +5,7 @@ Authors: Mac Malone
 -/
 prelude
 import Init.Data.Ord
+import Std.Data.OrderAxioms.LawfulEqOrd
 
 namespace Lake
 
@@ -25,6 +26,10 @@ class LawfulCmpEq (α : Type u) (cmp : α → α → Ordering) extends EqOfCmp �
   cmp_rfl {a : α} : cmp a a = .eq
 
 export LawfulCmpEq (cmp_rfl)
+
+scoped instance [inst : LawfulCmpEq κ cmp] : LawfulEqCmp cmp where
+  eq_of_compare := inst.eq_of_cmp ∘ beq_iff_eq.mp
+  compare_self := inst.cmp_rfl
 
 attribute [simp] cmp_rfl
 
