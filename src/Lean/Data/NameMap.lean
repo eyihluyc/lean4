@@ -6,11 +6,13 @@ Author: Leonardo de Moura
 prelude
 import Std.Data.HashSet.Basic
 import Lean.Data.HashSet
-import Lean.Data.RBMap
 import Lean.Data.RBTree
 import Lean.Data.SSet
 import Lean.Data.Name
+import Std.Data.TreeMap.Basic
+
 namespace Lean
+open Std (TreeMap)
 
 def NameMap (α : Type) := RBMap Name α Name.quickCmp
 

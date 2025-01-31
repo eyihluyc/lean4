@@ -192,7 +192,7 @@ def registerParametricAttribute (impl : ParametricAttributeImpl α) : IO (Parame
     addImportedFn   := fun s => impl.afterImport s *> pure {}
     addEntryFn      := fun (s : NameMap α) (p : Name × α) => s.insert p.1 p.2
     exportEntriesFn := fun m =>
-      let r : Array (Name × α) := m.fold (fun a n p => a.push (n, p)) #[]
+      let r : Array (Name × α) := m.foldl (fun a n p => a.push (n, p)) #[]
       r.qsort (fun a b => Name.quickLt a.1 b.1)
     statsFn         := fun s => "parametric attribute" ++ Format.line ++ "number of local entries: " ++ format s.size
   }
@@ -249,7 +249,7 @@ def registerEnumAttributes (attrDescrs : List (Name × String × α))
     addImportedFn   := fun _ _ => pure {}
     addEntryFn      := fun (s : NameMap α) (p : Name × α) => s.insert p.1 p.2
     exportEntriesFn := fun m =>
-      let r : Array (Name × α) := m.fold (fun a n p => a.push (n, p)) #[]
+      let r : Array (Name × α) := m.foldl (fun a n p => a.push (n, p)) #[]
       r.qsort (fun a b => Name.quickLt a.1 b.1)
     statsFn         := fun s => "enumeration attribute extension" ++ Format.line ++ "number of local entries: " ++ format s.size
   }

@@ -11,7 +11,7 @@ namespace Lean
 namespace Xml
 
 def Attributes := RBMap String String compare
-instance : ToString Attributes := ⟨λ as => as.fold (λ s n v => s ++ s!" {n}=\"{v}\"") ""⟩
+instance : ToString Attributes := ⟨λ as => as.foldl (λ s n v => s ++ s!" {n}=\"{v}\"") ""⟩
 
 mutual
 inductive Element

@@ -247,7 +247,7 @@ structure CodeBlock where
   uvars : VarSet := {} -- set of variables updated by `code`
 
 private def varSetToArray (s : VarSet) : Array Var :=
-  s.fold (fun xs _ x => xs.push x) #[]
+  s.foldl (fun xs _ x => xs.push x) #[]
 
 private def varsToMessageData (vars : Array Var) : MessageData :=
   MessageData.joinSep (vars.toList.map fun n => MessageData.ofName (n.getId.simpMacroScopes)) " "
@@ -540,7 +540,7 @@ partial def extendUpdatedVars (c : CodeBlock) (ws : VarSet) : TermElabM CodeBloc
     pure { c with uvars := ws }
 
 private def union (s₁ s₂ : VarSet) : VarSet :=
-  s₁.fold (·.insert ·) s₂
+  s₁.foldl (·.insert ·) s₂
 
 /--
 Given two code blocks `c₁` and `c₂`, make sure they have the same set of updated variables.

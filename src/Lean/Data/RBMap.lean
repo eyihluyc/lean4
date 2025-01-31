@@ -279,6 +279,9 @@ def isSingleton (t : RBMap α β cmp) : Bool :=
 @[inline] def fold (f : σ → α → β → σ) : (init : σ) → RBMap α β cmp → σ
   | b, ⟨t, _⟩ => t.fold f b
 
+@[inline] def foldl (f : σ → α → β → σ) : (init : σ) → RBMap α β cmp → σ
+  | b, ⟨t, _⟩ => t.fold f b
+
 @[inline] def revFold (f : σ → α → β → σ) : (init : σ) → RBMap α β cmp → σ
   | b, ⟨t, _⟩ => t.revFold f b
 
