@@ -161,6 +161,18 @@ instance : Repr (TreeMap α β cmp) where
 @[inline] def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
   l.foldl (fun t e => t.insert e.1 e.2) ∅
 
+@[inline] def fromList (l : List (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+/-- Merges the maps `t₁` and `t₂`, if a key `a : α` exists in both,
+then use `mergeFn a b₁ b₂` to produce the new merged value. -/
+def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : TreeMap α β cmp) : TreeMap α β cmp :=
+  t₂.foldl (init := t₁) fun t₁ a b₂ =>
+    t₁.insert a <|
+      match t₁.find? a with
+      | some b₁ => mergeFn a b₁ b₂
+      | none => b₂
+
 end TreeMap
 
 end Std
