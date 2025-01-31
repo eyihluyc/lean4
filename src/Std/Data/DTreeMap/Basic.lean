@@ -163,6 +163,11 @@ universe w in
 @[specialize] def toList (t : DTreeMap α β cmp) : List ((a : α) × β a) :=
   t.inner.toList
 
+@[inline] def fromArray (l : Array ((a : α) × β a)) (cmp : α → α → Ordering) : DTreeMap α β cmp :=
+  letI : Ord α := ⟨cmp⟩
+  let impl := Internal.Impl.fromArray l
+  ⟨impl.val, sorry⟩
+
 instance : Membership α (DTreeMap α β cmp) where
   mem m a := m.contains a
 

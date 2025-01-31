@@ -637,3 +637,11 @@ def forIn [Monad m] (f : δ → (a : α) → β a → m (ForInStep δ)) (init : 
   match ← forInStep f init t with
   | ForInStep.done d => return d
   | ForInStep.yield d => return d
+
+@[inline] def fromArraySlow [Ord α] (l : Array ((a : α) × β a)) : Impl α β :=
+  l.foldl (fun r p => r.insertSlow p.1 p.2) empty
+
+@[inline] def fromArray [Ord α] (l : Array ((a : α) × β a)) : { t : Impl α β // t.Balanced } :=
+  l.foldl (β := {t : Impl α β // t.Balanced }) (fun r p =>
+    let treeB := r.val.insert p.1 p.2 r.property
+    ⟨treeB.impl, treeB.balanced_impl⟩) ⟨empty, balanced_empty⟩

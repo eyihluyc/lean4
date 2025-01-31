@@ -116,6 +116,14 @@ def get? (t : TreeMap α β cmp) (a : α) : Option β :=
 def get! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
   DTreeMap.Const.get! l.inner a
 
+@[inline, inherit_doc DTreeMap.get?]
+def find? (t : TreeMap α β cmp) (a : α) : Option β :=
+  DTreeMap.Const.get? t.inner a
+
+@[inline]
+def find! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
+  DTreeMap.Const.get! l.inner a
+
 instance : Membership α (TreeMap α β cmp) where
   mem m a := m.contains a
 
@@ -149,6 +157,9 @@ instance : Repr (TreeMap α β cmp) where
 /-- Returns a `List` of the key/value pairs in order. -/
 @[specialize] def toList (t : TreeMap α β cmp) : List (α × β) :=
   Std.DTreeMap.Internal.Impl.Const.toList t.inner.inner
+
+@[inline] def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
+  l.foldl (fun t e => t.insert e.1 e.2) ∅
 
 end TreeMap
 
