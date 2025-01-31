@@ -58,13 +58,13 @@ structure ExprDiff where
 instance : EmptyCollection ExprDiff := ⟨{}⟩
 instance : Append ExprDiff where
   append a b := {
-    changesBefore := RBMap.mergeBy (fun _ _ b => b) a.changesBefore b.changesBefore,
-    changesAfter := RBMap.mergeBy (fun _ _ b => b) a.changesAfter b.changesAfter
+    changesBefore := TreeMap.mergeBy (fun _ _ b => b) a.changesBefore b.changesBefore,
+    changesAfter := TreeMap.mergeBy (fun _ _ b => b) a.changesAfter b.changesAfter
   }
 instance : ToString ExprDiff where
   toString x :=
     let f := fun (p : PosMap ExprDiffTag) =>
-      RBMap.toList p |>.map (fun (k,v) => s!"({toString k}:{toString v})")
+      TreeMap.toList p |>.map (fun (k,v) => s!"({toString k}:{toString v})")
     s!"before: {f x.changesBefore}\nafter: {f x.changesAfter}"
 
 /-- Add a tag at the given position to the `changesBefore` dict. -/
@@ -76,8 +76,8 @@ def ExprDiff.insertAfterChange (p : Pos) (d : ExprDiffTag := .change) (δ : Expr
   {δ with changesAfter := δ.changesAfter.insert p d}
 
 def ExprDiff.withChangePos (before after : Pos) (d : ExprDiffTag := .change) : ExprDiff :=
-  { changesAfter := RBMap.empty.insert after d
-    changesBefore := RBMap.empty.insert before d
+  { changesAfter := TreeMap.empty.insert after d
+    changesBefore := TreeMap.empty.insert before d
   }
 
 /-- Add a tag to the diff at the positions given by `before` and `after`. -/

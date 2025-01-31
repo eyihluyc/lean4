@@ -17,6 +17,7 @@ this part is implemented in C++. The procedures described in the paper
 above are implemented in Lean.
 -/
 namespace Lean.IR
+open Std (TreeMap)
 
 /-- Function identifier -/
 abbrev FunId := Name
@@ -456,7 +457,7 @@ inductive LocalContextEntry where
   | localVar  : IRType → Expr → LocalContextEntry
   | joinPoint : Array Param → FnBody → LocalContextEntry
 
-abbrev LocalContext := RBMap Index LocalContextEntry compare
+abbrev LocalContext := TreeMap Index LocalContextEntry compare
 
 def LocalContext.addLocal (ctx : LocalContext) (x : VarId) (t : IRType) (v : Expr) : LocalContext :=
   ctx.insert x.idx (LocalContextEntry.localVar t v)
@@ -496,7 +497,7 @@ def LocalContext.isLocalVar (ctx : LocalContext) (idx : Index) : Bool :=
   | _     => false
 
 def LocalContext.contains (ctx : LocalContext) (idx : Index) : Bool :=
-  RBMap.contains ctx idx
+  TreeMap.contains ctx idx
 
 def LocalContext.eraseJoinPointDecl (ctx : LocalContext) (j : JoinPointId) : LocalContext :=
   ctx.erase j.idx
@@ -512,7 +513,7 @@ def LocalContext.getValue (ctx : LocalContext) (x : VarId) : Option Expr :=
   | some (LocalContextEntry.localVar _ v) => some v
   | _     => none
 
-abbrev IndexRenaming := RBMap Index Index compare
+abbrev IndexRenaming := TreeMap Index Index compare
 
 class AlphaEqv (α : Type) where
   aeqv : IndexRenaming → α → α → Bool

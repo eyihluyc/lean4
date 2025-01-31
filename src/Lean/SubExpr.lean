@@ -6,10 +6,10 @@ Authors: Sebastian Ullrich, Daniel Selsam, Wojciech Nawrocki, E.W.Ayers
 prelude
 import Lean.Meta.Basic
 import Lean.Data.Json
-import Lean.Data.RBMap
 import Init.Control.Option
 
 namespace Lean
+open Std (TreeMap)
 
 /-- A position of a subexpression in an expression.
 
@@ -171,7 +171,7 @@ def mkRoot (e : Expr) : SubExpr := ⟨e, Pos.root⟩
 def isRoot (s : SubExpr) : Bool := s.pos.isRoot
 
 /-- Map from subexpr positions to values. -/
-abbrev PosMap (α : Type u) := RBMap Pos α compare
+abbrev PosMap (α : Type u) := TreeMap Pos α compare
 
 def bindingBody! : SubExpr → SubExpr
   | ⟨.forallE _ _ b _, p⟩ => ⟨b, p.pushBindingBody⟩

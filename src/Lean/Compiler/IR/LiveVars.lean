@@ -8,6 +8,7 @@ import Lean.Compiler.IR.Basic
 import Lean.Compiler.IR.FreeVars
 
 namespace Lean.IR
+open Std (TreeMap)
 
 /-! Remark: in the paper "Counting Immutable Beans" the concepts of
    free and live variables coincide because the paper does *not* consider
@@ -80,7 +81,7 @@ def FnBody.hasLiveVar (b : FnBody) (ctx : LocalContext) (x : VarId) : Bool :=
   (IsLive.visitFnBody x.idx b).run' ctx
 
 abbrev LiveVarSet   := VarIdSet
-abbrev JPLiveVarMap := RBMap JoinPointId LiveVarSet (fun j₁ j₂ => compare j₁.idx j₂.idx)
+abbrev JPLiveVarMap := TreeMap JoinPointId LiveVarSet (fun j₁ j₂ => compare j₁.idx j₂.idx)
 
 instance : Inhabited LiveVarSet where
   default := {}

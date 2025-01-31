@@ -12,11 +12,13 @@ import Lean.Data.PersistentHashSet
 import Lean.Hygiene
 import Lean.Data.Name
 import Lean.Data.Format
+import Std.Data.TreeMap.Basic
 
 def Nat.imax (n m : Nat) : Nat :=
   if m = 0 then 0 else Nat.max n m
 
 namespace Lean
+open Std (TreeMap)
 
 /--
  Cached hash code, cached results, and other data for `Level`.
@@ -79,11 +81,11 @@ def LMVarIdSet := RBTree LMVarId (Name.quickCmp ·.name ·.name)
 
 instance : ForIn m LMVarIdSet LMVarId := inferInstanceAs (ForIn _ (RBTree ..) ..)
 
-def LMVarIdMap (α : Type) := RBMap LMVarId α (Name.quickCmp ·.name ·.name)
+def LMVarIdMap (α : Type) := TreeMap LMVarId α (Name.quickCmp ·.name ·.name)
 
-instance : EmptyCollection (LMVarIdMap α) := inferInstanceAs (EmptyCollection (RBMap ..))
+instance : EmptyCollection (LMVarIdMap α) := inferInstanceAs (EmptyCollection (TreeMap ..))
 
-instance : ForIn m (LMVarIdMap α) (LMVarId × α) := inferInstanceAs (ForIn _ (RBMap ..) ..)
+instance : ForIn m (LMVarIdMap α) (LMVarId × α) := inferInstanceAs (ForIn _ (TreeMap ..) ..)
 
 instance : Inhabited (LMVarIdMap α) where
   default := {}

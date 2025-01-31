@@ -11,6 +11,7 @@ import Lean.Widget.InteractiveGoal
 
 namespace Lean.Widget
 open Lsp Server
+open Std (TreeMap)
 
 inductive StrictOrLazy (α β : Type) : Type
   | strict : α → StrictOrLazy α β
@@ -95,7 +96,7 @@ that would effectively require reimplementing the (stateful, to keep track of in
 
 private inductive EmbedFmt
   /-- Nested tags denote `Info` objects in `infos`. -/
-  | code (ctx : Elab.ContextInfo) (infos : RBMap Nat Elab.Info compare)
+  | code (ctx : Elab.ContextInfo) (infos : TreeMap Nat Elab.Info compare)
   /-- Nested text is ignored. -/
   | goal (ctx : Elab.ContextInfo) (lctx : LocalContext) (g : MVarId)
   /-- Nested text is ignored. -/

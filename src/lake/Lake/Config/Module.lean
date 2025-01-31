@@ -9,7 +9,7 @@ import Lake.Config.LeanLib
 import Lake.Util.OrdHashSet
 
 namespace Lake
-open Lean System
+open Lean System Std
 
 /-- A buildable Lean module of a `LeanLib`. -/
 structure Module where
@@ -30,8 +30,8 @@ abbrev ModuleSet := Std.HashSet Module
 abbrev OrdModuleSet := OrdHashSet Module
 @[inline] def OrdModuleSet.empty : OrdModuleSet := OrdHashSet.empty
 
-abbrev ModuleMap (α) := RBMap Module α (·.name.quickCmp ·.name)
-@[inline] def ModuleMap.empty : ModuleMap α := RBMap.empty
+abbrev ModuleMap (α) := TreeMap Module α (·.name.quickCmp ·.name)
+@[inline] def ModuleMap.empty : ModuleMap α := ∅
 
 /--
 Locate the named, buildable module in the library

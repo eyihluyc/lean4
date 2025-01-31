@@ -15,13 +15,15 @@ This transformation is applied before lower level optimizations
 that introduce the instructions `release` and `set`
 -/
 
+open Std (TreeMap)
+
 structure VarInfo where
   ref        : Bool := true  -- true if the variable may be a reference (aka pointer) at runtime
   persistent : Bool := false -- true if the variable is statically known to be marked a Persistent at runtime
   consume    : Bool := false -- true if the variable RC must be "consumed"
   deriving Inhabited
 
-abbrev VarMap := RBMap VarId VarInfo (fun x y => compare x.idx y.idx)
+abbrev VarMap := TreeMap VarId VarInfo (fun x y => compare x.idx y.idx)
 
 structure Context where
   env            : Environment
