@@ -163,6 +163,11 @@ instance {m : Type w → Type w} : ForIn m (DTreeMap α β cmp) ((a : α) × β 
     if p a b then return true
   return false
 
+/-- Folds the given function over the mappings in the tree in ascending order. -/
+@[specialize]
+def foldlM {m δ} [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) (t : DTreeMap α β cmp) : m δ :=
+  t.inner.foldlM f init
+
 universe w in
 @[inline] def foldl {γ : Type w}
     (f : γ → (a : α) → β a → γ) (init : γ) (b : DTreeMap α β cmp) : γ :=
@@ -176,6 +181,11 @@ universe w in
   letI : Ord α := ⟨cmp⟩
   let impl := Internal.Impl.fromArray l
   ⟨impl.val, sorry⟩
+
+/-- Applies the given function to the mappings in the tree in ascending order. -/
+@[inline]
+def forM {m} [Monad m] (f : (a : α) → β a → m PUnit) (t : DTreeMap α β cmp) : m PUnit :=
+  t.inner.forM f
 
 instance : Membership α (DTreeMap α β cmp) where
   mem m a := m.contains a

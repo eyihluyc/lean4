@@ -145,10 +145,21 @@ instance {m : Type w → Type w} : ForIn m (TreeMap α β cmp) (α × β) where
 
 @[inline] def any (l : TreeMap α β cmp) (p : α → β → Bool) : Bool :=
   l.inner.any p
+
+/-- Folds the given function over the mappings in the tree in ascending order. -/
+@[specialize]
+def foldlM {m δ} [Monad m] (f : δ → α → β → m δ) (init : δ) (t : TreeMap α β cmp) : m δ :=
+  t.inner.foldlM f init
+
 universe w in
 @[inline] def foldl {γ : Type w}
     (f : γ → α → β → γ) (init : γ) (b : TreeMap α β cmp) : γ :=
   b.inner.foldl f init
+
+/-- Applies the given function to the mappings in the tree in ascending order. -/
+@[inline]
+def forM {m} [Monad m] (f : α → β → m PUnit) (t : TreeMap α β cmp) : m PUnit :=
+  t.inner.forM f
 
 instance : Repr (TreeMap α β cmp) where
   reprPrec _ _ := Format.nil
