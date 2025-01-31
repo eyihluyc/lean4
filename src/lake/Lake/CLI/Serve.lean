@@ -10,7 +10,7 @@ import Lake.Util.MainM
 import Lean.Util.FileSetupInfo
 
 namespace Lake
-open Lean
+open Lean Std
 open System (FilePath)
 
 /-- Exit code to return if `setup-file` cannot find the config file. -/
@@ -57,7 +57,7 @@ def setupFile
       let some module := ws.findModule? moduleName
         | pure ⟨∅⟩
       let options := module.serverOptions.map fun opt => ⟨opt.name, opt.value⟩
-      pure ⟨Lean.RBMap.fromArray options Lean.Name.cmp⟩
+      pure ⟨TreeMap.fromArray options Lean.Name.cmp⟩
     IO.println <| Json.compress <| toJson {
       paths,
       setupOptions

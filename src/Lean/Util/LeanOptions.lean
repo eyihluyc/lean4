@@ -5,8 +5,10 @@ Authors: Marc Huisinga
 -/
 prelude
 import Lean.Util.Paths
+import Std.Data.TreeMap.Basic
 
 namespace Lean
+open Std
 
 /-- Restriction of `DataValue` that covers exactly those cases that Lean is able to handle when passed via the `-D` flag. -/
 inductive LeanOptionValue where
@@ -60,7 +62,7 @@ def LeanOptionValue.asCliFlagValue : (v : LeanOptionValue) → String
 
 /-- Options that are used by Lean as if they were passed using `-D`. -/
 structure LeanOptions where
-  values : RBMap Name LeanOptionValue Name.cmp
+  values : TreeMap Name LeanOptionValue Name.cmp
   deriving Inhabited, Repr
 
 def LeanOptions.toOptions (leanOptions : LeanOptions) : Options := Id.run do
@@ -70,7 +72,7 @@ def LeanOptions.toOptions (leanOptions : LeanOptions) : Options := Id.run do
   return options
 
 def LeanOptions.fromOptions? (options : Options) : Option LeanOptions := do
-  let mut values := RBMap.empty
+  let mut values := TreeMap.empty
   for ⟨name, dataValue⟩ in options do
     let optionValue ← LeanOptionValue.ofDataValue? dataValue
     values := values.insert name optionValue
@@ -79,7 +81,7 @@ def LeanOptions.fromOptions? (options : Options) : Option LeanOptions := do
 instance : FromJson LeanOptions where
   fromJson?
     | Json.obj obj => do
-      let values ← obj.foldM (init := RBMap.empty) fun acc k v => do
+      let values ← obj.foldM (init := TreeMap.empty) fun acc k v => do
         let optionValue ← fromJson? v
         return acc.insert k.toName optionValue
       return ⟨values⟩
@@ -87,7 +89,7 @@ instance : FromJson LeanOptions where
 
 instance : ToJson LeanOptions where
   toJson options :=
-    Json.obj <| options.values.fold (init := RBNode.leaf) fun acc k v =>
+    Json.obj <| options.values.foldl (init := RBNode.leaf) fun acc k v =>
       acc.insert (cmp := compare) k.toString (toJson v)
 
 end Lean
