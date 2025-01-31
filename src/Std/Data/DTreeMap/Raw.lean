@@ -186,13 +186,15 @@ Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
 
 namespace Const
 
+variable {β : Type v}
+
 /--
 Tries to retrieve the mapping for the given key, returning `none` if no such mapping is present.
 
 Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
 -/
-@[inline] def get? (t : Raw α β cmp) (a : α) : Option (β a) :=
-  letI : Ord α := ⟨cmp⟩; get? t.inner a -- TODO: Which order of arguments is correct?
+@[inline] def get? (t : Raw α (fun _ => β) cmp) (a : α) : Option β :=
+  letI : Ord α := ⟨cmp⟩; Internal.Impl.Const.get? a t.inner -- TODO: Which order of arguments is correct?
 
 end Const
 
