@@ -51,7 +51,7 @@ where
       let visit {ω} : StateRefT IndexSet (ST ω) Unit :=
         e.forEachWhere Expr.isFVar fun e =>
           let fvarId := e.fvarId!
-          match localInst2Index.find? fvarId with
+          match localInst2Index.get? fvarId with
           | some idx => modify (·.insert idx)
           | none => pure ()
       runST (fun _ => visit |>.run usedInstIdxs) |>.2

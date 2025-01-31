@@ -1619,7 +1619,7 @@ def resolveLocalName (n : Name) : TermElabM (Option (Expr × List String)) := do
       let localDecl ← localDecl?
       if localDecl.isAuxDecl then
         guard (!skipAuxDecl)
-        if let some fullDeclName := auxDeclToFullName.find? localDecl.fvarId then
+        if let some fullDeclName := auxDeclToFullName.get? localDecl.fvarId then
           matchAuxRecDecl? localDecl fullDeclName givenNameView
         else
           matchLocalDecl? localDecl givenName

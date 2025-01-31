@@ -658,14 +658,14 @@ private def merge (s₁ s₂ : FVarIdSet) : M FVarIdSet :=
 
 private def updateUsedVarsOf (fvarId : FVarId) : M Unit := do
   let usedFVarsMap ← getUsedFVarsMap
-  match usedFVarsMap.find? fvarId with
+  match usedFVarsMap.get? fvarId with
   | none         => return ()
   | some fvarIds =>
     let fvarIdsNew ← fvarIds.foldM (init := fvarIds) fun fvarIdsNew fvarId' => do
       if fvarId == fvarId' then
         return fvarIdsNew
       else
-        match usedFVarsMap.find? fvarId' with
+        match usedFVarsMap.get? fvarId' with
         | none => return fvarIdsNew
           /- We are being sloppy here `otherFVarIds` may contain free variables that are
              not in the context of the let-rec associated with fvarId.
@@ -698,7 +698,7 @@ private def mkFreeVarMap [Monad m] [MonadMCtx m]
   let mut freeVarMap := {}
   for toLift in letRecsToLift do
     let lctx       := toLift.lctx
-    let fvarIdsSet := usedFVarsMap.find? toLift.fvarId |>.get!
+    let fvarIdsSet := usedFVarsMap.get? toLift.fvarId |>.get!
     let fvarIds    := fvarIdsSet.fold (init := #[]) fun fvarIds fvarId =>
       if lctx.contains fvarId && !recFVarIds.contains fvarId then
         fvarIds.push fvarId
@@ -803,7 +803,7 @@ private def mkLetRecClosureFor (toLift : LetRecToLift) (freeVars : Array FVarId)
     let s ← mkClosureFor freeVars <| xs.map fun x => lctx.get! x.fvarId!
     /- Apply original type binder info and user-facing names to local declarations. -/
     let typeLocalDecls := s.localDecls.map fun localDecl =>
-      if let some (userName, bi) := userNameBinderInfoMap.find? localDecl.fvarId then
+      if let some (userName, bi) := userNameBinderInfoMap.get? localDecl.fvarId then
         localDecl.setBinderInfo bi |>.setUserName userName
       else
         localDecl
@@ -833,7 +833,7 @@ private def mkLetRecClosures (sectionVars : Array Expr) (mainFVarIds : Array FVa
       -- We have to recompute the `freeVarMap` in this case. This overhead should not be an issue in practice.
       freeVarMap ← mkFreeVarMap sectionVars mainFVarIds recFVarIds letRecsToLift
     let toLift := letRecsToLift[i]!
-    result := result.push (← mkLetRecClosureFor toLift (freeVarMap.find? toLift.fvarId).get!)
+    result := result.push (← mkLetRecClosureFor toLift (freeVarMap.get? toLift.fvarId).get!)
   return result.toList
 
 /-- Mapping from FVarId of mutually recursive functions being defined to "closure" expression. -/
@@ -864,7 +864,7 @@ def Replacement.apply (r : Replacement) (e : Expr) : Expr :=
     e
   else
     e.replace fun e => match e with
-      | .fvar fvarId => match r.find? fvarId with
+      | .fvar fvarId => match r.get? fvarId with
         | some c => some c
         | _      => none
       | _ => none
