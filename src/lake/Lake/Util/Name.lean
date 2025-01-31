@@ -37,11 +37,11 @@ abbrev DNameMap α := DTreeMap Name α Name.quickCmp
 @[inline] def DNameMap.empty : DNameMap α := DTreeMap.empty
 
 instance [ToJson α] : ToJson (NameMap α) where
-  toJson m := Json.obj <| m.foldl (fun n k v => n.insert compare k.toString (toJson v)) .leaf
+  toJson m := Json.obj <| m.foldl (fun n k v => n.insert k.toString (toJson v)) ∅
 
 instance [FromJson α] : FromJson (NameMap α) where
   fromJson? j := do
-    (← j.getObj?).foldM (init := {}) fun m k v =>
+    (← j.getObj?).foldlM (init := {}) fun m k v =>
       let k := k.toName
       if k.isAnonymous then
         throw "expected name"

@@ -162,7 +162,7 @@ instance : ToJson ModuleRefs where
 instance : FromJson ModuleRefs where
   fromJson? j := do
     let node ← j.getObj?
-    node.foldM (init := Std.HashMap.empty) fun m k v =>
+    node.foldlM (init := Std.HashMap.empty) fun m k v =>
       return m.insert (← RefIdent.fromJson? (← Json.parse k)) (← fromJson? v)
 
 /--

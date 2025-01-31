@@ -250,7 +250,7 @@ instance : FromJson DocumentChange where
 [reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEdit) -/
 structure WorkspaceEdit where
   /-- Changes to existing resources. -/
-  changes? : Option (TreeMap DocumentUri TextEditBatch compare) := none
+  changes? : Option (TreeMap.Raw DocumentUri TextEditBatch compare) := none
   /-- Depending on the client capability
     `workspace.workspaceEdit.resourceOperations` document changes are either
     an array of `TextDocumentEdit`s to express changes to n different text
@@ -271,7 +271,7 @@ structure WorkspaceEdit where
 
       Whether clients honor this property depends on the client capability
       `workspace.changeAnnotationSupport`. -/
-  changeAnnotations? : Option (RBMap String ChangeAnnotation compare) := none
+  changeAnnotations? : Option (TreeMap.Raw String ChangeAnnotation compare) := none
   deriving ToJson, FromJson
 
 namespace WorkspaceEdit
