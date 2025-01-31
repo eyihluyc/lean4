@@ -455,6 +455,13 @@ def map [Ord α] (f : (a : α) → β a → γ a) (t : Impl α β) : Impl α γ 
   | .leaf => .leaf
   | .inner sz k v l r => .inner sz k (f k v) (map f l) (map f r)
 
+@[specialize]
+def mapM {α : Type v} {β γ : α → Type v} {M : Type v → Type v} [Applicative M]
+  (f : (a : α) → β a → M (γ a))
+  : Impl α β → M (Impl α γ)
+  | leaf => pure leaf
+  | inner sz k v l r => pure (.inner sz k) <*> f k v <*> l.mapM f <*> r.mapM f
+
 /-- Returns the tree consisting of the mapping `(k, v)` where `(k, v)` was a mapping in the
 original tree and `f k v = true`. -/
 @[specialize]

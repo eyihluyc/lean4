@@ -67,19 +67,19 @@ structure DTreeMap (α : Type u) (β : α → Type v) (cmp : α → α → Order
 
 namespace DTreeMap
 
-@[inline, inherit_doc Raw.isEmpty]
-def isEmpty (t : DTreeMap α β cmp) : Bool :=
-  t.inner.isEmpty
-
-@[inline]
-def isSingleton (t : DTreeMap α β cmp) : Bool :=
-  t.inner.isSingleton
-
 @[inline, inherit_doc Raw.empty]
 def empty : DTreeMap α β cmp :=
   letI : Ord α := ⟨cmp⟩; ⟨Internal.Impl.empty, .empty⟩
 
 instance : EmptyCollection (DTreeMap α β cmp) := ⟨empty⟩
+
+@[inline, inherit_doc Raw.isEmpty]
+def isEmpty (t : DTreeMap α β cmp) : Bool :=
+  t.inner.isEmpty
+
+@[inline, inherit_doc Raw.isSingleton]
+def isSingleton (t : DTreeMap α β cmp) : Bool :=
+  t.inner.isSingleton
 
 @[inline, inherit_doc Raw.insert]
 def insert (l : DTreeMap α β cmp) (a : α) (b : β a) : DTreeMap α β cmp :=
@@ -116,29 +116,37 @@ def containsThenInsertIfNew (t : DTreeMap α β cmp) (a : α) (b : β a) :
 
 @[inline, inherit_doc Raw.get?]
 def get? [LawfulEqCmp cmp] (t : DTreeMap α β cmp) (a : α) : Option (β a) :=
-  letI : Ord α := ⟨cmp⟩
-  t.inner.get? a
+  letI : Ord α := ⟨cmp⟩; t.inner.get? a
 
-@[inline] def get! [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) [Inhabited (β a)]  : β a :=
-  letI : Ord α := ⟨cmp⟩
-  l.inner.get! a
+@[inline, inherit_doc Raw.get]
+def get [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) (h : l.contains a) : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.get a h
 
-@[inline] def getD [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) (fallback : β a) : β a :=
-  letI : Ord α := ⟨cmp⟩
-  l.inner.getD a fallback
+@[inline, inherit_doc Raw.get!]
+def get! [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) [Inhabited (β a)]  : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.get! a
+
+@[inline, inherit_doc Raw.getD]
+def getD [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) (fallback : β a) : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.getD a fallback
 
 namespace Const
 open Internal (Impl)
 
 variable {β : Type v}
 
-@[inline, inherit_doc Raw.get?]
+@[inline, inherit_doc Raw.Const.get?]
 def get? (t : DTreeMap α (fun _ => β) cmp) (a : α) : Option β :=
   letI : Ord α := ⟨cmp⟩
   Impl.Const.get? a t.inner
 
 @[inline]
-def get! (l : DTreeMap α (fun _ => β) cmp) (a : α) [Inhabited β]  : β :=
+def get (l : DTreeMap α (fun _ => β) cmp) (a : α) (h : l.contains a) : β :=
+  letI : Ord α := ⟨cmp⟩
+  Impl.Const.get a l.inner h
+
+@[inline]
+def get! (l : DTreeMap α (fun _ => β) cmp) (a : α) [Inhabited β] : β :=
   letI : Ord α := ⟨cmp⟩
   Impl.Const.get! a l.inner
 
@@ -149,43 +157,116 @@ def getD (l : DTreeMap α (fun _ => β) cmp) (a : α) (fallback : β) : β :=
 
 end Const
 
-universe w in
-@[inline] def forIn {m : Type w → Type w} [Monad m]
+universe w
+
+@[inline, inherit_doc Raw.forM]
+def forM {m} [Monad m] (f : (a : α) → β a → m PUnit) (t : DTreeMap α β cmp) : m PUnit :=
+  t.inner.forM f
+
+@[inline, inherit_doc Raw.forIn]
+def forIn {m : Type w → Type w} [Monad m]
     {γ : Type w} (f : (a : α) → β a → γ → m (ForInStep γ)) (init : γ) (b : DTreeMap α β cmp) : m γ :=
   b.inner.forIn (fun c a b => f a b c) init
 
-universe w in
 instance {m : Type w → Type w} : ForIn m (DTreeMap α β cmp) ((a : α) × β a) where
   forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
 
-@[inline] def any (l : DTreeMap α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
+@[inline, inherit_doc Raw.any]
+def any (l : DTreeMap α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
   for ⟨a, b⟩ in l do
     if p a b then return true
   return false
 
-/-- Folds the given function over the mappings in the tree in ascending order. -/
-@[specialize]
+@[inline, inherit_doc Raw.all]
+def all (l : DTreeMap α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
+  for ⟨a, b⟩ in l do
+    if not <| p a b then return false
+  return true
+
+@[inline, inherit_doc Raw.foldlM]
 def foldlM {m δ} [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) (t : DTreeMap α β cmp) : m δ :=
   t.inner.foldlM f init
 
-universe w in
-@[inline] def foldl {γ : Type w}
+@[inline, inherit_doc Raw.foldl]
+def foldl {γ : Type w}
     (f : γ → (a : α) → β a → γ) (init : γ) (b : DTreeMap α β cmp) : γ :=
   b.inner.foldl f init
 
-/-- Returns a `List` of the key/value pairs in order. -/
-@[specialize] def toList (t : DTreeMap α β cmp) : List ((a : α) × β a) :=
+@[inline, inherit_doc Raw.toList]
+def toList (t : DTreeMap α β cmp) : List ((a : α) × β a) :=
   t.inner.toList
 
-@[inline] def fromArray (l : Array ((a : α) × β a)) (cmp : α → α → Ordering) : DTreeMap α β cmp :=
+@[inline, inherit_doc Raw.fromList]
+def fromList (l : List ((a : α) × β a)) (cmp : α → α → Ordering) : DTreeMap α β cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+@[inline, inherit_doc Raw.toArray]
+def toArray (t : DTreeMap α β cmp) : Array ((a : α) × β a) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
+@[inline, inherit_doc fromArray]
+def fromArray (l : Array ((a : α) × β a)) (cmp : α → α → Ordering) : DTreeMap α β cmp :=
   letI : Ord α := ⟨cmp⟩
   let impl := Internal.Impl.fromArray l
   ⟨impl.val, sorry⟩
 
-/-- Applies the given function to the mappings in the tree in ascending order. -/
+namespace Const
+
+variable {β : Type v}
+
+@[inline, inherit_doc Raw.Const.toList]
+def toList (t : DTreeMap α (fun _ => β) cmp) : List (α × β) :=
+  Std.DTreeMap.Internal.Impl.Const.toList t.inner
+
+@[inline, inherit_doc Raw.Const.fromList]
+def fromList (l : List (α × β)) (cmp : α → α → Ordering) : DTreeMap α (fun _ => β) cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+@[inline, inherit_doc Raw.Const.toArray]
+def toArray (t : DTreeMap α (fun _ => β) cmp) : Array (α × β) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
+@[inline, inherit_doc Raw.Const.fromArray]
+def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : DTreeMap α (fun _ => β) cmp :=
+  l.foldl (fun t e => t.insert e.1 e.2) ∅
+
+end Const
+
+@[inline, inherit_doc Raw.mergeBy]
+def mergeBy [LawfulEqCmp cmp] (mergeFn : (a : α) → β a → β a → β a) (t₁ t₂ : DTreeMap α β cmp) : DTreeMap α β cmp :=
+  t₂.foldl (init := t₁) fun t₁ a b₂ =>
+    t₁.insert a <|
+      match t₁.get? a with
+      | some b₁ => mergeFn a b₁ b₂
+      | none => b₂
+
+namespace Const
+
+variable {β : Type v}
+
+@[inline, inherit_doc Raw.Const.mergeBy]
+def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : DTreeMap α (fun _ => β) cmp) : DTreeMap α (fun _ => β) cmp :=
+  t₂.foldl (init := t₁) fun t₁ a b₂ =>
+    t₁.insert a <|
+      match get? t₁ a with
+      | some b₁ => mergeFn a b₁ b₂
+      | none => b₂
+
+end Const
+
+variable {γ : α → Type w} in
+def filterMap (f : (a : α) → β a → Option (γ a)) (m : DTreeMap α β cmp) : DTreeMap α γ cmp :=
+  m.foldl (fun r k v => match f k v with
+    | none => r
+    | some b => r.insert k b) {}
+
+variable {γ : α → Type w} in
 @[inline]
-def forM {m} [Monad m] (f : (a : α) → β a → m PUnit) (t : DTreeMap α β cmp) : m PUnit :=
-  t.inner.forM f
+def map (f : (a : α) → β a → γ a) (t : DTreeMap α β cmp) : DTreeMap α γ cmp :=
+  letI : Ord α := ⟨cmp⟩; ⟨t.inner.map f, sorry⟩
+
+def filter (f : (a : α) → β a → Bool) (m : DTreeMap α β cmp) : DTreeMap α β cmp :=
+  m.foldl (fun r k v => if f k v then r.insert k v else r) ∅
 
 instance : Membership α (DTreeMap α β cmp) where
   mem m a := m.contains a

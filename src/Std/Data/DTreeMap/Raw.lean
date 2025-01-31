@@ -93,8 +93,7 @@ use the empty collection notations `∅` and `{}` to create an empty tree map.
 def empty : Raw α β cmp :=
   ⟨Internal.Impl.empty⟩
 
-instance : EmptyCollection (Raw α β cmp) where
-  emptyCollection := empty
+instance : EmptyCollection (Raw α β cmp) := ⟨empty⟩
 
 /--
 Returns `true` if the tree map contains no mappings.
@@ -102,6 +101,10 @@ Returns `true` if the tree map contains no mappings.
 @[inline]
 def isEmpty (t : Raw α β cmp) : Bool :=
   t.inner.isEmpty
+
+@[inline]
+def isSingleton (t : Raw α β cmp) : Bool :=
+  t.inner.isSingleton
 
 /--
 Inserts the given mapping into the map. If there is already a mapping for the given key, then both
@@ -181,10 +184,24 @@ Tries to retrieve the mapping for the given key, returning `none` if no such map
 
 Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
 -/
-@[inline] def get? [LawfulEqCmp cmp] (t : Raw α β cmp) (a : α) : Option (β a) :=
+@[inline]
+def get? [LawfulEqCmp cmp] (t : Raw α β cmp) (a : α) : Option (β a) :=
   letI : Ord α := ⟨cmp⟩; t.inner.get? a
 
+@[inline]
+def get [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) (h : l.contains a) : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.get a h
+
+@[inline]
+def get! [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) [Inhabited (β a)]  : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.get! a
+
+@[inline]
+def getD [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) (fallback : β a) : β a :=
+  letI : Ord α := ⟨cmp⟩; l.inner.getD a fallback
+
 namespace Const
+open Internal
 
 variable {β : Type v}
 
@@ -194,9 +211,133 @@ Tries to retrieve the mapping for the given key, returning `none` if no such map
 Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
 -/
 @[inline] def get? (t : Raw α (fun _ => β) cmp) (a : α) : Option β :=
-  letI : Ord α := ⟨cmp⟩; Internal.Impl.Const.get? a t.inner -- TODO: Which order of arguments is correct?
+  letI : Ord α := ⟨cmp⟩; Impl.Const.get? a t.inner -- TODO: Which order of arguments is correct?
+
+@[inline]
+def get (l : Raw α (fun _ => β) cmp) (a : α) (h : l.contains a) : β :=
+  letI : Ord α := ⟨cmp⟩; Impl.Const.get a l.inner h
+
+@[inline]
+def get! (l : Raw α (fun _ => β) cmp) (a : α) [Inhabited β] : β :=
+  letI : Ord α := ⟨cmp⟩; Impl.Const.get! a l.inner
+
+@[inline]
+def getD (l : Raw α (fun _ => β) cmp) (a : α) (fallback : β) : β :=
+  letI : Ord α := ⟨cmp⟩; Impl.Const.getD a l.inner fallback
 
 end Const
+
+universe w
+
+@[inline]
+def forM {m} [Monad m] (f : (a : α) → β a → m PUnit) (t : Raw α β cmp) : m PUnit :=
+  t.inner.forM f
+
+@[inline]
+def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : (a : α) → β a → γ → m (ForInStep γ)) (init : γ) (b : Raw α β cmp) : m γ :=
+  b.inner.forIn (fun c a b => f a b c) init
+
+instance {m : Type w → Type w} : ForIn m (Raw α β cmp) ((a : α) × β a) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
+
+@[inline]
+def any (l : Raw α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
+  for ⟨a, b⟩ in l do
+    if p a b then return true
+  return false
+
+@[inline]
+def all (l : Raw α β cmp) (p : (a : α) → β a → Bool) : Bool := Id.run $ do
+  for ⟨a, b⟩ in l do
+    if not <| p a b then return false
+  return true
+
+@[inline]
+def foldlM {m δ} [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) (t : Raw α β cmp) : m δ :=
+  t.inner.foldlM f init
+
+@[inline]
+def foldl {γ : Type w}
+    (f : γ → (a : α) → β a → γ) (init : γ) (b : Raw α β cmp) : γ :=
+  b.inner.foldl f init
+
+@[inline]
+def toList (t : Raw α β cmp) : List ((a : α) × β a) :=
+  t.inner.toList
+
+@[inline]
+def fromList (l : List ((a : α) × β a)) (cmp : α → α → Ordering) : Raw α β cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+@[inline]
+def toArray (t : Raw α β cmp) : Array ((a : α) × β a) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
+@[inline]
+def fromArray (l : Array ((a : α) × β a)) (cmp : α → α → Ordering) : Raw α β cmp :=
+  letI : Ord α := ⟨cmp⟩
+  let impl := Internal.Impl.fromArray l
+  ⟨impl.val⟩
+
+namespace Const
+open Internal
+
+variable {β : Type v}
+
+@[inline]
+def toList (t : Raw α (fun _ => β) cmp) : List (α × β) :=
+  Impl.Const.toList t.inner
+
+@[inline]
+def fromList (l : List (α × β)) (cmp : α → α → Ordering) : Raw α (fun _ => β) cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+@[inline]
+def toArray (t : Raw α (fun _ => β) cmp) : Array (α × β) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
+@[inline]
+def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : Raw α (fun _ => β) cmp :=
+  l.foldl (fun t e => t.insert e.1 e.2) ∅
+
+end Const
+
+@[inline]
+def mergeBy [LawfulEqCmp cmp] (mergeFn : (a : α) → β a → β a → β a) (t₁ t₂ : Raw α β cmp) : Raw α β cmp :=
+  t₂.foldl (init := t₁) fun t₁ a b₂ =>
+    t₁.insert a <|
+      match t₁.get? a with
+      | some b₁ => mergeFn a b₁ b₂
+      | none => b₂
+
+namespace Const
+
+variable {β : Type v}
+
+@[inline]
+def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : Raw α (fun _ => β) cmp) : Raw α (fun _ => β) cmp :=
+  t₂.foldl (init := t₁) fun t₁ a b₂ =>
+    t₁.insert a <|
+      match get? t₁ a with
+      | some b₁ => mergeFn a b₁ b₂
+      | none => b₂
+
+end Const
+
+variable {γ : α → Type w} in
+def filterMap (f : (a : α) → β a → Option (γ a)) (m : Raw α β cmp) : Raw α γ cmp :=
+  m.foldl (fun r k v => match f k v with
+    | none => r
+    | some b => r.insert k b) {}
+
+variable {γ : α → Type w} in
+@[inline]
+def map (f : (a : α) → β a → γ a) (t : Raw α β cmp) : Raw α γ cmp :=
+  letI : Ord α := ⟨cmp⟩; ⟨t.inner.map f⟩
+
+def filter (f : (a : α) → β a → Bool) (m : Raw α β cmp) : Raw α β cmp :=
+  m.foldl (fun r k v => if f k v then r.insert k v else r) ∅
 
 instance : Membership α (Raw α β cmp) where
   mem m a := m.contains a

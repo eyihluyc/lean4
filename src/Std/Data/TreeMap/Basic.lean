@@ -73,7 +73,7 @@ instance : EmptyCollection (TreeMap α β cmp) where
 def isEmpty (t : TreeMap α β cmp) : Bool :=
   t.inner.isEmpty
 
-@[inline]
+@[inline, inherit_doc DTreeMap.isSingleton]
 def isSingleton (t : TreeMap α β cmp) : Bool :=
   t.inner.isSingleton
 
@@ -112,9 +112,17 @@ def containsThenInsertIfNew (t : TreeMap α β cmp) (a : α) (b : β) :
 def get? (t : TreeMap α β cmp) (a : α) : Option β :=
   DTreeMap.Const.get? t.inner a
 
-@[inline]
+@[inline, inherit_doc DTreeMap.get]
+def get (l : TreeMap α β cmp) (a : α) (h : l.contains a) : β :=
+   DTreeMap.Const.get l.inner a h
+
+@[inline, inherit_doc DTreeMap.get!]
 def get! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
   DTreeMap.Const.get! l.inner a
+
+@[inline]
+def getD (l : TreeMap α β cmp) (a : α) (fallback : β) : β :=
+  DTreeMap.Const.getD l.inner a fallback
 
 @[inline, inherit_doc DTreeMap.get?]
 def find? (t : TreeMap α β cmp) (a : α) : Option β :=
@@ -128,79 +136,93 @@ def find! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
 def findD (l : TreeMap α β cmp) (a : α) (fallback : β) : β :=
   DTreeMap.Const.getD l.inner a fallback
 
+universe w
+
+@[inline, inherit_doc DTreeMap.forM]
+def forM {m} [Monad m] (f : α → β → m PUnit) (t : TreeMap α β cmp) : m PUnit :=
+  t.inner.forM f
+
+@[inline, inherit_doc DTreeMap.forIn] def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : α → β → γ → m (ForInStep γ)) (init : γ) (b : TreeMap α β cmp) : m γ :=
+  b.inner.forIn (fun a b c => f a b c) init
+
+instance {m : Type w → Type w} : ForIn m (TreeMap α β cmp) (α × β) where
+  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
+
+@[inline, inherit_doc DTreeMap.any]
+def any (l : TreeMap α β cmp) (p : α → β → Bool) : Bool :=
+  l.inner.any p
+
+@[inline, inherit_doc DTreeMap.all]
+def all (l : TreeMap α β cmp) (p : α → β → Bool) : Bool :=
+  l.inner.all p
+
+@[inline, inherit_doc DTreeMap.foldlM]
+def foldlM {m δ} [Monad m] (f : δ → (a : α) → β → m δ) (init : δ) (t : TreeMap α β cmp) : m δ :=
+  t.inner.foldlM f init
+
+@[inline, inherit_doc TreeMap.foldl]
+def foldl {γ : Type w}
+    (f : γ → (a : α) → β → γ) (init : γ) (b : TreeMap α β cmp) : γ :=
+  b.inner.foldl f init
+
+@[inline, inherit_doc TreeMap.toList]
+def toList (t : TreeMap α β cmp) : List (α × β) :=
+  DTreeMap.Const.toList t.inner
+
+@[inline, inherit_doc TreeMap.fromList]
+def fromList (l : List (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
+  l.foldl (fun r p => r.insert p.1 p.2) ∅
+
+@[inline, inherit_doc TreeMap.toArray]
+def toArray (t : TreeMap α β cmp) : Array (α × β) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
+@[inline, inherit_doc TreeMap.fromArray]
+def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
+  l.foldl (fun t e => t.insert e.1 e.2) ∅
+
+@[inline, inherit_doc TreeMap.mergeBy]
+def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : TreeMap α β cmp) : TreeMap α β cmp :=
+  ⟨DTreeMap.Const.mergeBy mergeFn t₁.inner t₂.inner⟩
+
+variable {γ : Type w} in
+def filterMap (f : (a : α) → β → Option γ) (m : TreeMap α β cmp) : TreeMap α γ cmp :=
+  ⟨m.inner.filterMap f⟩
+
+variable {γ : Type w} in
+@[inline]
+def map (f : α → β → γ) (t : TreeMap α β cmp) : TreeMap α γ cmp :=
+  letI : Ord α := ⟨cmp⟩; ⟨t.inner.map f⟩
+
+def filter (f : α → β → Bool) (m : TreeMap α β cmp) : TreeMap α β cmp :=
+  ⟨m.inner.filter f⟩
+
 instance : Membership α (TreeMap α β cmp) where
   mem m a := m.contains a
 
 instance {m : TreeMap α β cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
 
-universe w in
-@[inline] def forIn {m : Type w → Type w} [Monad m]
-    {γ : Type w} (f : α → β → γ → m (ForInStep γ)) (init : γ) (b : TreeMap α β cmp) : m γ :=
-  b.inner.forIn (fun a b c => f a b c) init
-
-universe w in
-instance {m : Type w → Type w} : ForIn m (TreeMap α β cmp) (α × β) where
-  forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
-
-@[inline] def any (l : TreeMap α β cmp) (p : α → β → Bool) : Bool :=
-  l.inner.any p
-
-/-- Folds the given function over the mappings in the tree in ascending order. -/
-@[specialize]
-def foldlM {m δ} [Monad m] (f : δ → α → β → m δ) (init : δ) (t : TreeMap α β cmp) : m δ :=
-  t.inner.foldlM f init
-
-universe w in
-@[inline] def foldl {γ : Type w}
-    (f : γ → α → β → γ) (init : γ) (b : TreeMap α β cmp) : γ :=
-  b.inner.foldl f init
-
-/-- Applies the given function to the mappings in the tree in ascending order. -/
-@[inline]
-def forM {m} [Monad m] (f : α → β → m PUnit) (t : TreeMap α β cmp) : m PUnit :=
-  t.inner.forM f
-
-instance : Repr (TreeMap α β cmp) where
-  reprPrec _ _ := Format.nil
-
 instance : Inhabited (TreeMap α β cmp) := ⟨empty⟩
 
+-- /-- Folds the given function over the mappings in the tree in ascending order. -/
+-- @[specialize]
+-- def foldlM {m δ} [Monad m] (f : δ → α → β → m δ) (init : δ) (t : TreeMap α β cmp) : m δ :=
+--   t.inner.foldlM f init
+
+-- universe w in
+-- @[inline] def foldl {γ : Type w}
+--     (f : γ → α → β → γ) (init : γ) (b : TreeMap α β cmp) : γ :=
+--   b.inner.foldl f init
+
+-- /-- Applies the given function to the mappings in the tree in ascending order. -/
+-- @[inline]
+-- def forM {m} [Monad m] (f : α → β → m PUnit) (t : TreeMap α β cmp) : m PUnit :=
+--   t.inner.forM f
+
 instance : Repr (TreeMap α β cmp) where
   reprPrec _ _ := Format.nil
-
-/-- Returns a `List` of the key/value pairs in order. -/
-@[specialize] def toList (t : TreeMap α β cmp) : List (α × β) :=
-  Std.DTreeMap.Internal.Impl.Const.toList t.inner.inner
-
-/-- Returns a `Array` of the key/value pairs in order. -/
-@[specialize] def toArray (t : TreeMap α β cmp) : Array (α × β) :=
-  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
-
-@[inline] def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
-  l.foldl (fun t e => t.insert e.1 e.2) ∅
-
-@[inline] def fromList (l : List (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
-  l.foldl (fun r p => r.insert p.1 p.2) ∅
-
-/-- Merges the maps `t₁` and `t₂`, if a key `a : α` exists in both,
-then use `mergeFn a b₁ b₂` to produce the new merged value. -/
-def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : TreeMap α β cmp) : TreeMap α β cmp :=
-  t₂.foldl (init := t₁) fun t₁ a b₂ =>
-    t₁.insert a <|
-      match t₁.find? a with
-      | some b₁ => mergeFn a b₁ b₂
-      | none => b₂
-
-universe w in
-variable {γ : Type w} in
-def filterMap (f : α → β → Option γ) (m : TreeMap α β cmp) : TreeMap α γ cmp :=
-  m.foldl (fun r k v => match f k v with
-    | none => r
-    | some b => r.insert k b) {}
-
-def filter (f : α → β → Bool) (m : TreeMap α β cmp) : TreeMap α β cmp :=
-  m.foldl (fun r k v => if f k v then r.insert k v else r) ∅
 
 end TreeMap
 
