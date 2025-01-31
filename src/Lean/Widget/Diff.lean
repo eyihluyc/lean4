@@ -261,7 +261,7 @@ def diffInteractiveGoals (useAfter : Bool) (info : Elab.TacticInfo) (igs₁ : In
       return s.insert g ms
     )
     let isParent (before after : MVarId) : Bool :=
-       match parentMap.find? before with
+       match parentMap.get? before with
        | some xs => xs.contains after
        | none => false
     let goals ← igs₁.goals.mapM (fun ig₁ => do
