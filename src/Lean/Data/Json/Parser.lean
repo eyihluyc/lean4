@@ -11,6 +11,7 @@ import Std.Internal.Parsec
 
 open Std.Internal.Parsec
 open Std.Internal.Parsec.String
+open Std (TreeMap.Raw)
 
 namespace Lean.Json.Parser
 
@@ -183,7 +184,7 @@ mutual
     else
       fail "unexpected character in array"
 
-  partial def objectCore (kvs : RBNode String (fun _ => Json)) : Parser (RBNode String (fun _ => Json)) := do
+  partial def objectCore (kvs : TreeMap.Raw String Json compare) : Parser (TreeMap.Raw String Json compare) := do
     lookahead (fun c => c == '"') "\""; skip;
     let k ← str; ws
     lookahead (fun c => c == ':') ":"; skip; ws
@@ -191,10 +192,10 @@ mutual
     let c ← any
     if c == '}' then
       ws
-      return kvs.insert compare k v
+      return kvs.insert k v
     else if c == ',' then
       ws
-      objectCore (kvs.insert compare k v)
+      objectCore (kvs.insert k v)
     else
       fail "unexpected character in object"
 
@@ -214,9 +215,9 @@ mutual
       let c ← peek!
       if c == '}' then
         skip; ws
-        return Json.obj (RBNode.leaf)
+        return Json.obj ∅
       else
-        let kvs ← objectCore RBNode.leaf
+        let kvs ← objectCore ∅
         return Json.obj kvs
     else if c == '\"' then
       skip

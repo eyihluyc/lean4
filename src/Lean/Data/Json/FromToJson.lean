@@ -9,6 +9,7 @@ import Lean.Data.Json.Basic
 import Lean.Data.Json.Printer
 
 namespace Lean
+open Std (TreeMap)
 
 universe u
 
@@ -140,13 +141,13 @@ instance : FromJson Float where
     | (Json.num jn) => Except.ok jn.toFloat
     | _ => Except.error "Expected a number or a string 'Infinity', '-Infinity', 'NaN'."
 
-instance [ToJson α] : ToJson (RBMap String α cmp) where
-  toJson m := Json.obj <| RBNode.map (fun _ => toJson) <| m.val
+instance [ToJson α] : ToJson (TreeMap.Raw String α compare) where
+  toJson m := Json.obj <| TreeMap.Raw.map (fun _ => toJson) <| m
 
-instance {cmp} [FromJson α] : FromJson (RBMap String α cmp) where
+instance {cmp} [FromJson α] : FromJson (TreeMap.Raw String α cmp) where
   fromJson? j := do
     let o ← j.getObj?
-    o.foldM (fun x k v => x.insert k <$> fromJson? v) ∅
+    o.foldlM (fun x k v => x.insert k <$> fromJson? v) ∅
 
 namespace Json
 

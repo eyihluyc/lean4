@@ -17,6 +17,7 @@ namespace Lean
 namespace Lsp
 
 open Json
+open Std (TreeMap)
 
 abbrev DocumentUri := String
 
@@ -249,7 +250,7 @@ instance : FromJson DocumentChange where
 [reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEdit) -/
 structure WorkspaceEdit where
   /-- Changes to existing resources. -/
-  changes? : Option (RBMap DocumentUri TextEditBatch compare) := none
+  changes? : Option (TreeMap DocumentUri TextEditBatch compare) := none
   /-- Depending on the client capability
     `workspace.workspaceEdit.resourceOperations` document changes are either
     an array of `TextDocumentEdit`s to express changes to n different text

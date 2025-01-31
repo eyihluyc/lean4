@@ -10,8 +10,10 @@ import Init.Data.OfScientific
 import Init.Data.Hashable
 import Lean.Data.RBMap
 import Init.Data.ToString.Macro
+import Std.Data.TreeMap.Raw
 
 namespace Lean
+open Std (TreeMap.Raw)
 
 -- mantissa * 10^-exponent
 structure JsonNumber where
@@ -181,7 +183,7 @@ inductive Json where
   -- uses RBNode instead of RBMap because RBMap is a def
   -- and thus currently cannot be used to define a type that
   -- is recursive in one of its parameters
-  | obj (kvPairs : RBNode String (fun _ => Json))
+  | obj (kvPairs : TreeMap.Raw String Json compare)
   deriving Inhabited
 
 namespace Json
@@ -196,10 +198,10 @@ private partial def beq' : Json → Json → Bool
     a == b
   | obj a,  obj b =>
     let _ : BEq Json := ⟨beq'⟩
-    let szA := a.fold (init := 0) (fun a _ _ => a + 1)
-    let szB := b.fold (init := 0) (fun a _ _ => a + 1)
+    let szA := a.foldl (init := 0) (fun a _ _ => a + 1)
+    let szB := b.foldl (init := 0) (fun a _ _ => a + 1)
     szA == szB && a.all fun field fa =>
-      match b.find compare field with
+      match b.get? field with
       | none    => false
       | some fb => fa == fb
   | _,      _      => false
@@ -215,7 +217,7 @@ private partial def hash' : Json → UInt64
   | arr elems =>
     mixHash 23 <| elems.foldl (init := 7) fun r a => mixHash r (hash' a)
   | obj kvPairs =>
-    mixHash 29 <| kvPairs.fold (init := 7) fun r k v => mixHash r <| mixHash (hash k) (hash' v)
+    mixHash 29 <| kvPairs.foldl (init := 7) fun r k v => mixHash r <| mixHash (hash k) (hash' v)
 
 instance : Hashable Json where
   hash := hash'
@@ -223,9 +225,9 @@ instance : Hashable Json where
 -- HACK(Marc): temporary ugliness until we can use RBMap for JSON objects
 def mkObj (o : List (String × Json)) : Json :=
   obj <| Id.run do
-    let mut kvPairs := RBNode.leaf
+    let mut kvPairs := TreeMap.Raw.empty
     for ⟨k, v⟩ in o do
-      kvPairs := kvPairs.insert compare k v
+      kvPairs := kvPairs.insert k v
     kvPairs
 
 instance : Coe Nat Json := ⟨fun n => Json.num n⟩
@@ -238,7 +240,7 @@ def isNull : Json -> Bool
   | null => true
   | _    => false
 
-def getObj? : Json → Except String (RBNode String (fun _ => Json))
+def getObj? : Json → Except String (TreeMap.Raw String Json compare)
   | obj kvs => return kvs
   | _       => throw "object expected"
 
@@ -268,7 +270,7 @@ def getNum? : Json → Except String JsonNumber
 
 def getObjVal? : Json → String → Except String Json
   | obj kvs, k =>
-    match kvs.find compare k with
+    match kvs.get? k with
     | some v => return v
     | none => throw s!"property not found: {k}"
   | _      , _ => throw "object expected"
@@ -284,7 +286,7 @@ def getObjValD (j : Json) (k : String) : Json :=
   (j.getObjVal? k).toOption.getD null
 
 def setObjVal! : Json → String → Json → Json
-  | obj kvs, k, v => obj <| kvs.insert compare k v
+  | obj kvs, k, v => obj <| kvs.insert k v
   | _      , _, _ => panic! "Json.setObjVal!: not an object: {j}"
 
 open Lean.RBNode in
@@ -293,15 +295,15 @@ If `o₁` is not a json object, `o₂` will be returned.
 -/
 def mergeObj : Json → Json → Json
   | obj kvs₁, obj kvs₂ =>
-    obj <| fold (insert compare) kvs₁ kvs₂
+    obj <| kvs₂.foldl TreeMap.Raw.insert kvs₁
   | _, j₂ => j₂
 
 inductive Structured where
   | arr (elems : Array Json)
-  | obj (kvPairs : RBNode String (fun _ => Json))
+  | obj (kvPairs : TreeMap.Raw String Json compare)
 
 instance : Coe (Array Json) Structured := ⟨Structured.arr⟩
-instance : Coe (RBNode String (fun _ => Json)) Structured := ⟨Structured.obj⟩
+instance : Coe (TreeMap.Raw String Json compare) Structured := ⟨Structured.obj⟩
 
 end Json
 end Lean

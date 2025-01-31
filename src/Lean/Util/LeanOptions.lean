@@ -81,7 +81,7 @@ def LeanOptions.fromOptions? (options : Options) : Option LeanOptions := do
 instance : FromJson LeanOptions where
   fromJson?
     | Json.obj obj => do
-      let values ← obj.foldM (init := TreeMap.empty) fun acc k v => do
+      let values ← obj.foldlM (init := TreeMap.empty) fun acc k v => do
         let optionValue ← fromJson? v
         return acc.insert k.toName optionValue
       return ⟨values⟩
@@ -89,7 +89,7 @@ instance : FromJson LeanOptions where
 
 instance : ToJson LeanOptions where
   toJson options :=
-    Json.obj <| options.values.foldl (init := RBNode.leaf) fun acc k v =>
+    Json.obj <| options.values.foldl (init := ∅) fun acc k v =>
       acc.insert (cmp := compare) k.toString (toJson v)
 
 end Lean
