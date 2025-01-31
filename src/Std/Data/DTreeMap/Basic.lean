@@ -123,6 +123,10 @@ def get? [LawfulEqCmp cmp] (t : DTreeMap α β cmp) (a : α) : Option (β a) :=
   letI : Ord α := ⟨cmp⟩
   l.inner.get! a
 
+@[inline] def getD [LawfulEqCmp cmp] (l : DTreeMap α β cmp) (a : α) (fallback : β a) : β a :=
+  letI : Ord α := ⟨cmp⟩
+  l.inner.getD a fallback
+
 namespace Const
 open Internal (Impl)
 
@@ -137,6 +141,11 @@ def get? (t : DTreeMap α (fun _ => β) cmp) (a : α) : Option β :=
 def get! (l : DTreeMap α (fun _ => β) cmp) (a : α) [Inhabited β]  : β :=
   letI : Ord α := ⟨cmp⟩
   Impl.Const.get! a l.inner
+
+@[inline]
+def getD (l : DTreeMap α (fun _ => β) cmp) (a : α) (fallback : β) : β :=
+  letI : Ord α := ⟨cmp⟩
+  Impl.Const.getD a l.inner fallback
 
 end Const
 

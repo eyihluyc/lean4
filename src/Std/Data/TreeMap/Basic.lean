@@ -124,6 +124,10 @@ def find? (t : TreeMap α β cmp) (a : α) : Option β :=
 def find! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
   DTreeMap.Const.get! l.inner a
 
+@[inline]
+def findD (l : TreeMap α β cmp) (a : α) (fallback : β) : β :=
+  DTreeMap.Const.getD l.inner a fallback
+
 instance : Membership α (TreeMap α β cmp) where
   mem m a := m.contains a
 
@@ -158,6 +162,10 @@ instance : Repr (TreeMap α β cmp) where
 @[specialize] def toList (t : TreeMap α β cmp) : List (α × β) :=
   Std.DTreeMap.Internal.Impl.Const.toList t.inner.inner
 
+/-- Returns a `Array` of the key/value pairs in order. -/
+@[specialize] def toArray (t : TreeMap α β cmp) : Array (α × β) :=
+  t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
+
 @[inline] def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
   l.foldl (fun t e => t.insert e.1 e.2) ∅
 
@@ -172,6 +180,16 @@ def mergeBy (mergeFn : α → β → β → β) (t₁ t₂ : TreeMap α β cmp) 
       match t₁.find? a with
       | some b₁ => mergeFn a b₁ b₂
       | none => b₂
+
+universe w in
+variable {γ : Type w} in
+def filterMap (f : α → β → Option γ) (m : TreeMap α β cmp) : TreeMap α γ cmp :=
+  m.foldl (fun r k v => match f k v with
+    | none => r
+    | some b => r.insert k b) {}
+
+def filter (f : α → β → Bool) (m : TreeMap α β cmp) : TreeMap α β cmp :=
+  m.foldl (fun r k v => if f k v then r.insert k v else r) ∅
 
 end TreeMap
 
