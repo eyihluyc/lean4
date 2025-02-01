@@ -23,6 +23,7 @@ open Std.Sat
 open Std.Tactic.BVDecide
 open Std.Tactic.BVDecide.Reflect
 open Lean.Meta
+open Std (TreeMap)
 
 /--
 Given:
@@ -37,7 +38,7 @@ expression - pair values.
 def reconstructCounterExample (var2Cnf : Std.HashMap BVBit Nat) (assignment : Array (Bool × Nat))
     (aigSize : Nat) (atomsAssignment : Std.HashMap Nat (Nat × Expr × Bool)) :
     Array (Expr × BVExpr.PackedBitVec) := Id.run do
-  let mut sparseMap : Std.HashMap Nat (RBMap Nat Bool Ord.compare) := {}
+  let mut sparseMap : Std.HashMap Nat (TreeMap Nat Bool Ord.compare) := {}
   let filter bvBit _ :=
     let (_, _, synthetic) := atomsAssignment.get! bvBit.var
     !synthetic
@@ -319,4 +320,3 @@ def evalBvTrace : Tactic := fun
 
 end Frontend
 end Lean.Elab.Tactic.BVDecide
-

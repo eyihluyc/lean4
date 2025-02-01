@@ -10,6 +10,7 @@ import Lean.Server.Rpc.RequestHandling
 
 namespace Lean.Widget
 open Meta Elab
+open Std (TreeMap)
 
 /-- A widget module is a unit of source code that can execute in the infoview.
 
@@ -57,7 +58,7 @@ class ToModule (α : Type u) where
 
 instance : ToModule Module := ⟨id⟩
 
-private builtin_initialize builtinModulesRef : IO.Ref (RBMap UInt64 (Name × Module) compare) ←
+private builtin_initialize builtinModulesRef : IO.Ref (TreeMap UInt64 (Name × Module) compare) ←
   IO.mkRef ∅
 
 def addBuiltinModule (id : Name) (m : Module) : IO Unit :=
@@ -69,7 +70,7 @@ where `inst : ToModule α` is synthesized during registration time
 and stored thereafter. -/
 private abbrev ModuleRegistry := SimplePersistentEnvExtension
   (UInt64 × Name × Expr)
-  (RBMap UInt64 (Name × Expr) compare)
+  (TreeMap UInt64 (Name × Expr) compare)
 
 builtin_initialize moduleRegistry : ModuleRegistry ←
   registerSimplePersistentEnvExtension {
@@ -182,7 +183,7 @@ This is similar to a parametric attribute, except that:
   which we cannot do owing to the closure. -/
 private abbrev PanelWidgetsExt := SimpleScopedEnvExtension
   (UInt64 × Name)
-  (RBMap UInt64 (List PanelWidgetsExtEntry) compare)
+  (TreeMap UInt64 (List PanelWidgetsExtEntry) compare)
 
 builtin_initialize panelWidgetsExt : PanelWidgetsExt ←
   registerSimpleScopedEnvExtension {

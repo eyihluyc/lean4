@@ -58,6 +58,7 @@ tokens until the next command keyword on error.
 -/
 
 namespace Lean.Parser
+open Std (TreeMap)
 
 def dbgTraceStateFn (label : String) (p : ParserFn) : ParserFn :=
   fun c s =>
@@ -1577,21 +1578,21 @@ def eoi : Parser := {
 }
 
 /-- A multimap indexed by tokens. Used for indexing parsers by their leading token. -/
-def TokenMap (α : Type) := RBMap Name (List α) Name.quickCmp
+def TokenMap (α : Type) := TreeMap Name (List α) Name.quickCmp
 
 namespace TokenMap
 
 def insert (map : TokenMap α) (k : Name) (v : α) : TokenMap α :=
   match map.find? k with
-  | none    => RBMap.insert map k [v]
-  | some vs => RBMap.insert map k (v::vs)
+  | none    => TreeMap.insert map k [v]
+  | some vs => TreeMap.insert map k (v::vs)
 
 instance : Inhabited (TokenMap α) where
-  default := RBMap.empty
+  default := TreeMap.empty
 
-instance : EmptyCollection (TokenMap α) := ⟨RBMap.empty⟩
+instance : EmptyCollection (TokenMap α) := ⟨TreeMap.empty⟩
 
-instance : ForIn m (TokenMap α) (Name × List α) := inferInstanceAs (ForIn _ (RBMap ..) _)
+instance : ForIn m (TokenMap α) (Name × List α) := inferInstanceAs (ForIn _ (TreeMap ..) _)
 
 end TokenMap
 

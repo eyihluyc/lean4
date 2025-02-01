@@ -6,7 +6,6 @@ Authors: Sebastian Ullrich, Daniel Selsam, Wojciech Nawrocki
 prelude
 import Lean.Meta.Basic
 import Lean.SubExpr
-import Lean.Data.RBMap
 
 /-!
 # Subexpr utilities for delaborator.
@@ -15,8 +14,9 @@ in sync with the `Nat` "position" values that refer to them.
 -/
 
 namespace Lean.PrettyPrinter.Delaborator
+open Std (TreeMap)
 
-abbrev OptionsPerPos := RBMap SubExpr.Pos Options compare
+abbrev OptionsPerPos := TreeMap SubExpr.Pos Options compare
 
 def OptionsPerPos.insertAt (optionsPerPos : OptionsPerPos) (pos : SubExpr.Pos) (name : Name) (value : DataValue) : OptionsPerPos :=
   let opts := optionsPerPos.find? pos |>.getD {}
@@ -24,7 +24,7 @@ def OptionsPerPos.insertAt (optionsPerPos : OptionsPerPos) (pos : SubExpr.Pos) (
 
 /-- Merges two collections of options, where the second overrides the first. -/
 def OptionsPerPos.merge : OptionsPerPos → OptionsPerPos → OptionsPerPos :=
-  RBMap.mergeBy (fun _ => KVMap.mergeBy (fun _ _ dv => dv))
+  TreeMap.mergeBy (fun _ => KVMap.mergeBy (fun _ _ dv => dv))
 
 namespace SubExpr
 

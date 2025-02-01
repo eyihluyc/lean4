@@ -17,6 +17,7 @@ namespace Lean.Elab.Term
 open Lean.Parser.Term
 open Meta
 open TSyntax.Compat
+open Std (TreeMap)
 
 private def getDoSeqElems (doSeq : Syntax) : List Syntax :=
   if doSeq.getKind == ``Parser.Term.doSeqBracketed then
@@ -239,7 +240,7 @@ def Code.getRef? : Code → Option Syntax
   | .matchExpr ref ..    => ref
   | .jmp ref ..          => ref
 
-abbrev VarSet := RBMap Name Syntax Name.cmp
+abbrev VarSet := TreeMap Name Syntax Name.cmp
 
 /-- A code block, and the collection of variables updated by it. -/
 structure CodeBlock where

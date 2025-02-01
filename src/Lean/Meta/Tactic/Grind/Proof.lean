@@ -8,6 +8,7 @@ import Init.Grind.Lemmas
 import Lean.Meta.Tactic.Grind.Types
 
 namespace Lean.Meta.Grind
+open Std (TreeMap)
 
 private def isEqProof (h : Expr) : MetaM Bool := do
   return (← whnfD (← inferType h)).isAppOf ``Eq
@@ -49,7 +50,7 @@ Recall that this expression must exist since it is the root itself in the
 worst case.
 -/
 private def findCommon (lhs rhs : Expr) : GoalM Expr := do
-  let mut visited : RBMap Nat Expr compare := {}
+  let mut visited : TreeMap Nat Expr compare := {}
   let mut it := lhs
   -- Mark elements found following the path from `lhs` to the root.
   repeat

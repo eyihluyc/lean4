@@ -16,6 +16,7 @@ import Lean.Server.FileWorker.Utils
 
 import Lean.Server.Rpc.Basic
 
+open Std (TreeMap)
 namespace Lean.Language
 
 /--
@@ -86,7 +87,7 @@ def parseRequestParams (paramType : Type) [FromJson paramType] (params : Json)
       message := s!"Cannot parse request params: {params.compress}\n{inner}" }
 
 structure RequestContext where
-  rpcSessions   : RBMap UInt64 (IO.Ref FileWorker.RpcSession) compare
+  rpcSessions   : TreeMap UInt64 (IO.Ref FileWorker.RpcSession) compare
   srcSearchPath : SearchPath
   doc           : FileWorker.EditableDocument
   hLog          : IO.FS.Stream

@@ -8,7 +8,6 @@ prelude
 import Init.System.IO
 import Std.Sync.Mutex
 import Init.Data.ByteArray
-import Lean.Data.RBMap
 
 import Lean.Util.Paths
 
@@ -71,6 +70,7 @@ state.
 
 namespace Lean.Server.Watchdog
 
+open Std (TreeMap)
 open IO
 open Lsp
 open JsonRpc
@@ -106,7 +106,7 @@ section Utils
     | crashed (queuedMsgs : Array JsonRpc.Message) (origin : CrashOrigin)
     | running
 
-  abbrev PendingRequestMap := RBMap RequestID JsonRpc.Message compare
+  abbrev PendingRequestMap := TreeMap RequestID JsonRpc.Message compare
 end Utils
 
 section FileWorker
@@ -138,7 +138,7 @@ section FileWorker
   def errorPendingRequests (fw : FileWorker) (hError : FS.Stream) (code : ErrorCode) (msg : String)
       : IO Unit := do
     let pendingRequests ← fw.pendingRequestsRef.modifyGet
-      fun pendingRequests => (pendingRequests, RBMap.empty)
+      fun pendingRequests => (pendingRequests, ∅)
     for ⟨id, _⟩ in pendingRequests do
       hError.writeLspResponseError { id := id, code := code, message := msg }
 
@@ -174,8 +174,8 @@ section FileWorker
 end FileWorker
 
 section ServerM
-  abbrev FileWorkerMap := RBMap DocumentUri FileWorker compare
-  abbrev ImportMap := RBMap DocumentUri (RBTree DocumentUri compare) compare
+  abbrev FileWorkerMap := TreeMap DocumentUri FileWorker compare
+  abbrev ImportMap := TreeMap DocumentUri (RBTree DocumentUri compare) compare
 
   /-- Global import data for all open files managed by this watchdog. -/
   structure ImportData where
@@ -223,7 +223,7 @@ section ServerM
     sourceUri : DocumentUri
     localID   : RequestID
 
-  abbrev PendingServerRequestMap := RBMap RequestID RequestIDTranslation compare
+  abbrev PendingServerRequestMap := TreeMap RequestID RequestIDTranslation compare
 
   structure ServerRequestData where
     pendingServerRequests : PendingServerRequestMap
@@ -393,7 +393,7 @@ section ServerM
       setsid        := true
     }
     let exitCode ← Std.Mutex.new none
-    let pendingRequestsRef ← IO.mkRef (RBMap.empty : PendingRequestMap)
+    let pendingRequestsRef ← IO.mkRef (TreeMap.empty : PendingRequestMap)
     let initialDependencyBuildMode := m.dependencyBuildMode
     let updatedDependencyBuildMode :=
       if initialDependencyBuildMode matches .once then
@@ -749,7 +749,7 @@ def handlePrepareRename (p : PrepareRenameParams) : ServerM (Option Range) := do
 def handleRename (p : RenameParams) : ServerM Lsp.WorkspaceEdit := do
   if (String.toName p.newName).isAnonymous then
     throwServerError s!"Can't rename: `{p.newName}` is not an identifier"
-  let mut refs : Std.HashMap DocumentUri (RBMap Lsp.Position Lsp.Position compare) := ∅
+  let mut refs : Std.HashMap DocumentUri (TreeMap Lsp.Position Lsp.Position compare) := ∅
   for { uri, range } in (← handleReference { p with context.includeDeclaration := true }) do
     refs := refs.insert uri <| (refs.getD uri ∅).insert range.start range.end
   -- We have to filter the list of changes to put the ranges in order and
@@ -1181,12 +1181,12 @@ def initAndRunWatchdog (args : List String) (i o e : FS.Stream) : IO Unit := do
   let srcSearchPath ← initSrcSearchPath
   let references ← IO.mkRef .empty
   startLoadingReferences references
-  let fileWorkersRef ← IO.mkRef (RBMap.empty : FileWorkerMap)
+  let fileWorkersRef ← IO.mkRef (TreeMap.empty : FileWorkerMap)
   let serverRequestData ← IO.mkRef {
-    pendingServerRequests := RBMap.empty
+    pendingServerRequests := ∅
     freshServerRequestID  := 0
   }
-  let importData ← IO.mkRef ⟨RBMap.empty, RBMap.empty⟩
+  let importData ← IO.mkRef ⟨TreeMap.empty, TreeMap.empty⟩
   let i ← maybeTee "wdIn.txt" false i
   let o ← maybeTee "wdOut.txt" true o
   let e ← maybeTee "wdErr.txt" true e

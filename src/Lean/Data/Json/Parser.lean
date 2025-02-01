@@ -6,7 +6,6 @@ Authors: Gabriel Ebner, Marc Huisinga
 -/
 prelude
 import Lean.Data.Json.Basic
-import Lean.Data.RBMap
 import Std.Internal.Parsec
 
 open Std.Internal.Parsec

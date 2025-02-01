@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Henrik Böving
 -/
 prelude
-import Lean.Data.RBMap
 import Std.Tactic.BVDecide.LRAT.Actions
 import Std.Data.HashMap
+import Std.Data.TreeMap.Basic
 
 /-!
 This module implements the LRAT trimming algorithm described in section 4 of
@@ -17,7 +17,7 @@ This module implements the LRAT trimming algorithm described in section 4 of
 namespace Lean.Elab.Tactic.BVDecide
 namespace LRAT
 
-open Lean (RBMap)
+open Std (TreeMap)
 open Std.Tactic.BVDecide.LRAT (IntAction)
 
 namespace trim
@@ -43,7 +43,7 @@ structure State where
   /--
   The set of used proof step ids.
   -/
-  used : RBMap Nat Unit compare := {}
+  used : TreeMap Nat Unit compare := {}
   /--
   A mapping from old proof step ids to new ones. Used such that the proof remains a sequence without
   gaps.
@@ -108,7 +108,7 @@ def markUsed (id : Nat) : M Unit := do
     modify (fun s => { s with used := s.used.insert id () })
 
 @[inline]
-def getUsedSet : M (RBMap Nat Unit Ord.compare) := do
+def getUsedSet : M (TreeMap Nat Unit Ord.compare) := do
   let s ← get
   return s.used
 

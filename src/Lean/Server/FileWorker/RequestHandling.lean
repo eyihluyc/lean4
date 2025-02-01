@@ -27,6 +27,7 @@ open RequestM
 open Snapshots
 
 open Lean.Parser.Tactic.Doc (alternativeOfTactic getTacticExtensionString)
+open Std (TreeMap)
 
 def findCompletionCmdDataAtPos
     (doc : EditableDocument)
@@ -458,8 +459,8 @@ def noHighlightKinds : Array SyntaxNodeKind := #[
 
 -- TODO: make extensible, or don't
 /-- Keywords for which a specific semantic token is provided. -/
-def keywordSemanticTokenMap : RBMap String SemanticTokenType compare :=
-  RBMap.empty
+def keywordSemanticTokenMap : TreeMap String SemanticTokenType compare :=
+  TreeMap.empty
     |>.insert "sorry" .leanSorryLike
     |>.insert "admit" .leanSorryLike
     |>.insert "stop" .leanSorryLike

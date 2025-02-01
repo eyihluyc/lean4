@@ -8,7 +8,6 @@ prelude
 import Init.System.IO
 import Std.Sync.Channel
 
-import Lean.Data.RBMap
 import Lean.Environment
 
 import Lean.Data.Lsp
@@ -54,6 +53,7 @@ command that the request is looking for and the request sends a "content changed
 
 namespace Lean.Server.FileWorker
 
+open Std (TreeMap)
 open Lsp
 open IO
 open Snapshots
@@ -244,7 +244,7 @@ This option can only be set on the command line, not in the lakefile or via `set
 end Elab
 
 -- Pending requests are tracked so they can be canceled
-abbrev PendingRequestMap := RBMap RequestID (Task (Except IO.Error Unit)) compare
+abbrev PendingRequestMap := TreeMap RequestID (Task (Except IO.Error Unit)) compare
 
 structure AvailableImportsCache where
   availableImports       : ImportCompletion.AvailableImports
@@ -259,7 +259,7 @@ structure WorkerState where
   pendingRequests    : PendingRequestMap
   /-- A map of RPC session IDs. We allow asynchronous elab tasks and request handlers
   to modify sessions. A single `Ref` ensures atomic transactions. -/
-  rpcSessions        : RBMap UInt64 (IO.Ref RpcSession) compare
+  rpcSessions        : TreeMap UInt64 (IO.Ref RpcSession) compare
 
 abbrev WorkerM := ReaderT WorkerContext <| StateRefT WorkerState IO
 
@@ -374,8 +374,8 @@ section Initialization
       doc := { doc with reporter }
       reporterCancelTk
       srcSearchPathTask  := srcSearchPathPromise.result
-      pendingRequests    := RBMap.empty
-      rpcSessions        := RBMap.empty
+      pendingRequests    := ∅
+      rpcSessions        := ∅
       importCachingTask? := none
     })
   where
@@ -669,7 +669,7 @@ section MainLoop
           throwServerError s!"Failed responding to request {id}: {e}"
         pure <| acc.erase id
       else pure acc
-    let pendingRequests ← st.pendingRequests.foldM (fun acc id task => filterFinishedTasks acc id task) st.pendingRequests
+    let pendingRequests ← st.pendingRequests.foldlM (fun acc id task => filterFinishedTasks acc id task) st.pendingRequests
     st := { st with pendingRequests }
 
     -- Opportunistically (i.e. when we wake up on messages) check if any RPC session has expired.
