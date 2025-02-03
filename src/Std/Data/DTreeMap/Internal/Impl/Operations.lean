@@ -307,6 +307,7 @@ theorem balanced_empty : (empty : Impl α β).Balanced :=
 attribute [Std.Internal.tree_tac] or_true true_or
 
 /-- Adds a new mapping to the key, overwriting an existing one with equal key if present. -/
+@[inline]
 def insert [Ord α] (k : α) (v : β k) (t : Impl α β) (hl : t.Balanced) :
     TreeB α β t.size (t.size + 1) :=
   match t with
@@ -323,6 +324,7 @@ def insert [Ord α] (k : α) (v : β k) (t : Impl α β) (hl : t.Balanced) :
 
 /-- Slower version of `insert` which can be used in the absence of balance information but
 still assumes the preconditions of `insert`, otherwise might panic. -/
+@[inline]
 def insertSlow [Ord α] (k : α) (v : β k) (t : Impl α β) : Impl α β :=
   match t with
   | leaf => .inner 1 k v .leaf .leaf
@@ -384,6 +386,7 @@ def containsThenInsertIfNewSlow [Ord α] (k : α) (v : β k) (t : Impl α β) :
   if t.contains k then (true, t) else (false, t.insertSlow k v)
 
 /-- Removes the mapping with key `k`, if it exists. -/
+@[inline]
 def erase [Ord α] (k : α) (t : Impl α β) (h : t.Balanced) : TreeB α β (t.size - 1) t.size :=
   match t with
   | leaf => ⟨.leaf, ✓, ✓, ✓⟩
@@ -399,6 +402,7 @@ def erase [Ord α] (k : α) (t : Impl α β) (h : t.Balanced) : TreeB α β (t.s
 
 /-- Slower version of `erase` which can be used in the absence of balance
 information but still assumes the preconditions of `erase`, otherwise might panic. -/
+@[inline]
 def eraseSlow [Ord α] (k : α) (t : Impl α β) : Impl α β :=
   match t with
   | leaf => .leaf
@@ -616,7 +620,7 @@ def foldlM [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) : Impl 
     foldlM f middle r
 
 /-- Folds the given function over the mappings in the tree in ascending order. -/
-@[inline]
+@[specialize]
 def foldl (f : δ → (a : α) → β a → δ) (init : δ) (t : Impl α β) : δ :=
   Id.run (t.foldlM f init)
 
