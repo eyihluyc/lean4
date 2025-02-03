@@ -124,18 +124,6 @@ def get! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
 def getD (l : TreeMap α β cmp) (a : α) (fallback : β) : β :=
   DTreeMap.Const.getD l.inner a fallback
 
-@[inline, inherit_doc DTreeMap.get?]
-def find? (t : TreeMap α β cmp) (a : α) : Option β :=
-  DTreeMap.Const.get? t.inner a
-
-@[inline]
-def find! (l : TreeMap α β cmp) (a : α) [Inhabited β]  : β :=
-  DTreeMap.Const.get! l.inner a
-
-@[inline]
-def findD (l : TreeMap α β cmp) (a : α) (fallback : β) : β :=
-  DTreeMap.Const.getD l.inner a fallback
-
 universe w
 
 @[inline, inherit_doc DTreeMap.forM]
