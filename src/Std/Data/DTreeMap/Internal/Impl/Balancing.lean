@@ -70,9 +70,9 @@ scoped macro "tree_tac" : tactic => `(tactic|(
   subst_eqs
   repeat' split
   all_goals
-    try simp only [Std.Internal.tree_tac, tree_tac] at *
+    try simp only [Std.Internal.tree_tac] at *
   all_goals
-    try simp only [Std.Internal.tree_tac, tree_tac] at *
+    try simp only [Std.Internal.tree_tac] at *
     repeat cases ‹_ ∧ _›
     repeat' apply And.intro
   all_goals

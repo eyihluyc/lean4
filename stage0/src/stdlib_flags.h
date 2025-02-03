@@ -14,7 +14,7 @@ options get_default_options() {
     // of built-in parsers in quotations; this is usually the case, but setting
     // both to `true` may be necessary for handling non-builtin parsers with
     // builtin elaborators
-    opts = opts.update({"internal", "parseQuotWithCurrentStage"}, true);
+    opts = opts.update({"internal", "parseQuotWithCurrentStage"}, false);
     // changes to builtin parsers may also require toggling the following option if macros/syntax
     // with custom precheck hooks were affected
     opts = opts.update({"quotPrecheck"}, true);
