@@ -9,8 +9,9 @@ import Lean.Elab.Deriving.Basic
 
 namespace Lean.Elab
 open Command Meta Parser Term
+open Std (TreeSet)
 
-private abbrev IndexSet := RBTree Nat compare
+private abbrev IndexSet := TreeSet Nat compare
 private abbrev LocalInst2Index := FVarIdMap Nat
 
 private def implicitBinderF := Parser.Term.implicitBinder

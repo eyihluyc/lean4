@@ -13,12 +13,13 @@ import Lean.Hygiene
 import Lean.Data.Name
 import Lean.Data.Format
 import Std.Data.TreeMap.Basic
+import Std.Data.TreeSet.Basic
 
 def Nat.imax (n m : Nat) : Nat :=
   if m = 0 then 0 else Nat.max n m
 
 namespace Lean
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 
 /--
  Cached hash code, cached results, and other data for `Level`.
@@ -76,10 +77,10 @@ abbrev LMVarId := LevelMVarId
 instance : Repr LMVarId where
   reprPrec n p := reprPrec n.name p
 
-def LMVarIdSet := RBTree LMVarId (Name.quickCmp ·.name ·.name)
+def LMVarIdSet := TreeSet LMVarId (Name.quickCmp ·.name ·.name)
   deriving Inhabited, EmptyCollection
 
-instance : ForIn m LMVarIdSet LMVarId := inferInstanceAs (ForIn _ (RBTree ..) ..)
+instance : ForIn m LMVarIdSet LMVarId := inferInstanceAs (ForIn _ (TreeSet ..) ..)
 
 def LMVarIdMap (α : Type) := TreeMap LMVarId α (Name.quickCmp ·.name ·.name)
 

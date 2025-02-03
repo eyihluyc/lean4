@@ -142,7 +142,7 @@ def registerTagAttribute (name : Name) (descr : String)
     addImportedFn   := fun _ _ => pure {}
     addEntryFn      := fun (s : NameSet) n => s.insert n
     exportEntriesFn := fun es =>
-      let r : Array Name := es.fold (fun a e => a.push e) #[]
+      let r : Array Name := es.foldl (fun a e => a.push e) #[]
       r.qsort Name.quickLt
     statsFn         := fun s => "tag attribute" ++ Format.line ++ "number of local entries: " ++ format s.size
   }

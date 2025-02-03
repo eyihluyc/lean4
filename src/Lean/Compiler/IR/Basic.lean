@@ -8,6 +8,7 @@ import Lean.Data.KVMap
 import Lean.Data.Name
 import Lean.Data.Format
 import Lean.Compiler.ExternAttr
+import Std.Data.TreeSet.Basic
 /-!
 Implements (extended) λPure and λRc proposed in the article
 "Counting Immutable Beans", Sebastian Ullrich and Leonardo de Moura.
@@ -17,7 +18,7 @@ this part is implemented in C++. The procedures described in the paper
 above are implemented in Lean.
 -/
 namespace Lean.IR
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 
 /-- Function identifier -/
 abbrev FunId := Name
@@ -446,11 +447,11 @@ end Decl
   Decl.fdecl f xs ty FnBody.unreachable {}
 
 /-- Set of variable and join point names -/
-abbrev IndexSet := RBTree Index compare
+abbrev IndexSet := TreeSet Index compare
 instance : Inhabited IndexSet := ⟨{}⟩
 
 def mkIndexSet (idx : Index) : IndexSet :=
-  RBTree.empty.insert idx
+  TreeSet.empty.insert idx
 
 inductive LocalContextEntry where
   | param     : IRType → LocalContextEntry
@@ -604,7 +605,7 @@ def FnBody.beq (b₁ b₂ : FnBody) : Bool :=
 
 instance : BEq FnBody := ⟨FnBody.beq⟩
 
-abbrev VarIdSet := RBTree VarId (fun x y => compare x.idx y.idx)
+abbrev VarIdSet := TreeSet VarId (fun x y => compare x.idx y.idx)
 instance : Inhabited VarIdSet := ⟨{}⟩
 
 def mkIf (x : VarId) (t e : FnBody) : FnBody :=

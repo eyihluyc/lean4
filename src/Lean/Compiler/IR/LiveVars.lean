@@ -8,7 +8,7 @@ import Lean.Compiler.IR.Basic
 import Lean.Compiler.IR.FreeVars
 
 namespace Lean.IR
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 
 /-! Remark: in the paper "Counting Immutable Beans" the concepts of
    free and live variables coincide because the paper does *not* consider
@@ -87,7 +87,7 @@ instance : Inhabited LiveVarSet where
   default := {}
 
 def mkLiveVarSet (x : VarId) : LiveVarSet :=
-  RBTree.empty.insert x
+  TreeSet.empty.insert x
 
 namespace LiveVars
 
@@ -107,7 +107,7 @@ private def collectArgs (as : Array Arg) : Collector :=
   collectArray as collectArg
 
 private def accumulate (s' : LiveVarSet) : Collector :=
-  fun s => s'.fold (fun s x => s.insert x) s
+  fun s => s'.foldl (fun s x => s.insert x) s
 
 private def collectJP (m : JPLiveVarMap) (j : JoinPointId) : Collector :=
   match m.find? j with

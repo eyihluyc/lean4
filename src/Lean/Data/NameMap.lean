@@ -10,9 +10,10 @@ import Lean.Data.RBTree
 import Lean.Data.SSet
 import Lean.Data.Name
 import Std.Data.TreeMap.Basic
+import Std.Data.TreeSet.Basic
 
 namespace Lean
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 
 def NameMap (α : Type) := TreeMap Name α Name.quickCmp
 
@@ -47,26 +48,26 @@ def filterMap (f : Name → α → Option β) (m : NameMap α) : NameMap β := T
 
 end NameMap
 
-def NameSet := RBTree Name Name.quickCmp
+def NameSet := TreeSet Name Name.quickCmp
 
 namespace NameSet
-def empty : NameSet := mkRBTree Name Name.quickCmp
+def empty : NameSet := TreeSet.empty
 instance : EmptyCollection NameSet := ⟨empty⟩
 instance : Inhabited NameSet := ⟨empty⟩
-def insert (s : NameSet) (n : Name) : NameSet := RBTree.insert s n
-def contains (s : NameSet) (n : Name) : Bool := RBTree.contains s n
+def insert (s : NameSet) (n : Name) : NameSet := TreeSet.insert s n
+def contains (s : NameSet) (n : Name) : Bool := TreeSet.contains s n
 instance : ForIn m NameSet Name :=
-  inferInstanceAs (ForIn _ (RBTree ..) ..)
+  inferInstanceAs (ForIn _ (TreeSet ..) ..)
 
 /-- The union of two `NameSet`s. -/
 def append (s t : NameSet) : NameSet :=
-  s.mergeBy (fun _ _ _ => .unit) t
+  s.merge t
 
 instance : Append NameSet where
   append := NameSet.append
 
 /-- `filter f s` returns the `NameSet` consisting of all `x` in `s` where `f x` returns `true`. -/
-def filter (f : Name → Bool) (s : NameSet) : NameSet := RBTree.filter f s
+def filter (f : Name → Bool) (s : NameSet) : NameSet := TreeSet.filter f s
 
 end NameSet
 

@@ -75,7 +75,7 @@ private def updateRefUsingCtorInfo (ctx : Context) (x : VarId) (c : CtorInfo) : 
       | none      => m }
 
 private def addDecForAlt (ctx : Context) (caseLiveVars altLiveVars : LiveVarSet) (b : FnBody) : FnBody :=
-  caseLiveVars.fold (init := b) fun b x =>
+  caseLiveVars.foldl (init := b) fun b x =>
     if !altLiveVars.contains x && mustConsume ctx x then addDec ctx x b else b
 
 /-- `isFirstOcc xs x i = true` if `xs[i]` is the first occurrence of `xs[i]` in `xs` -/

@@ -784,7 +784,7 @@ where
   withReducible x
 
 private def updateUsedSimpsWithZetaDeltaCore (s : UsedSimps) (usedZetaDelta : FVarIdSet) : UsedSimps :=
-  usedZetaDelta.fold (init := s) fun s fvarId =>
+  usedZetaDelta.foldl (init := s) fun s fvarId =>
     s.insert <| .fvar fvarId
 
 private def updateUsedSimpsWithZetaDelta (ctx : Context) (stats : Stats) : MetaM Stats := do

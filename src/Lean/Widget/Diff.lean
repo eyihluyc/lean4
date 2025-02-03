@@ -257,7 +257,7 @@ def diffInteractiveGoals (useAfter : Bool) (info : Elab.TacticInfo) (igs₁ : In
     let goals₀ := if useAfter then info.goalsBefore else info.goalsAfter
     let parentMap : MVarIdMap MVarIdSet ← info.goalsBefore.foldlM (init := ∅) (fun s g => do
       let ms ← Expr.mvar g |> Lean.Meta.getMVars
-      let ms : MVarIdSet := RBTree.fromArray ms _
+      let ms : MVarIdSet := TreeSet.fromArray ms _
       return s.insert g ms
     )
     let isParent (before after : MVarId) : Bool :=

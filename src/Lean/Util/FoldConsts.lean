@@ -63,10 +63,10 @@ def getUsedConstantsAsSet (c : ConstantInfo) : NameSet :=
   c.type.getUsedConstantsAsSet ++ match c.value? with
   | some v => v.getUsedConstantsAsSet
   | none => match c with
-    | .inductInfo val => .ofList val.ctors
+    | .inductInfo val => .fromList val.ctors
     | .opaqueInfo val => val.value.getUsedConstantsAsSet
     | .ctorInfo val => ({} : NameSet).insert val.name
-    | .recInfo val => .ofList val.all
+    | .recInfo val => .fromList val.all
     | _ => {}
 
 end ConstantInfo

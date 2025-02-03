@@ -10,6 +10,7 @@ import Lean.Meta.DiscrTree
 import Lean.Meta.CollectMVars
 
 namespace Lean.Meta
+open Std (TreeSet)
 
 register_builtin_option synthInstance.checkSynthOrder : Bool := {
   defValue := true
@@ -272,7 +273,7 @@ structure DefaultInstanceEntry where
   instanceName : Name
   priority     : Nat
 
-abbrev PrioritySet := RBTree Nat (fun x y => compare y x)
+abbrev PrioritySet := TreeSet Nat (fun x y => compare y x)
 
 structure DefaultInstances where
   defaultInstances : NameMap (List (Name × Nat)) := {}

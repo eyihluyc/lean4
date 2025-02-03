@@ -70,7 +70,7 @@ state.
 
 namespace Lean.Server.Watchdog
 
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 open IO
 open Lsp
 open JsonRpc
@@ -175,7 +175,7 @@ end FileWorker
 
 section ServerM
   abbrev FileWorkerMap := TreeMap DocumentUri FileWorker compare
-  abbrev ImportMap := TreeMap DocumentUri (RBTree DocumentUri compare) compare
+  abbrev ImportMap := TreeMap DocumentUri (TreeSet DocumentUri compare) compare
 
   /-- Global import data for all open files managed by this watchdog. -/
   structure ImportData where
@@ -185,7 +185,7 @@ section ServerM
     importedBy : ImportMap
 
   /-- Updates `d` with the new set of `imports` for the file `uri`. -/
-  def ImportData.update (d : ImportData) (uri : DocumentUri) (imports : RBTree DocumentUri compare)
+  def ImportData.update (d : ImportData) (uri : DocumentUri) (imports : TreeSet DocumentUri compare)
       : ImportData := Id.run do
     let oldImports     := d.imports.findD uri ∅
     let removedImports := oldImports.diff imports
@@ -306,7 +306,7 @@ section ServerM
   def handleImportClosure (fw : FileWorker) (params : LeanImportClosureParams) : ServerM Unit := do
     let s ← read
     s.importData.modify fun importData =>
-      importData.update fw.doc.uri (.ofList params.importClosure.toList)
+      importData.update fw.doc.uri (.fromList params.importClosure.toList)
 
   /-- Creates a Task which forwards a worker's messages into the output stream until an event
   which must be handled in the main watchdog thread (e.g. an I/O error) happens. -/

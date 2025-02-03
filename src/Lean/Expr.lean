@@ -10,6 +10,7 @@ import Lean.Data.SMap
 import Lean.Level
 import Std.Data.HashSet.Basic
 import Std.Data.TreeMap.Basic
+import Std.Data.TreeSet.Basic
 
 namespace Lean
 open Std
@@ -235,13 +236,13 @@ instance : Repr FVarId where
 /--
 A set of unique free variable identifiers.
 This is a persistent data structure implemented using red-black trees. -/
-def FVarIdSet := RBTree FVarId (Name.quickCmp ·.name ·.name)
+def FVarIdSet := TreeSet FVarId (Name.quickCmp ·.name ·.name)
   deriving Inhabited, EmptyCollection
 
-instance : ForIn m FVarIdSet FVarId := inferInstanceAs (ForIn _ (RBTree ..) ..)
+instance : ForIn m FVarIdSet FVarId := inferInstanceAs (ForIn _ (TreeSet ..) ..)
 
 def FVarIdSet.insert (s : FVarIdSet) (fvarId : FVarId) : FVarIdSet :=
-  RBTree.insert s fvarId
+  TreeSet.insert s fvarId
 
 /--
 A set of unique free variable identifiers implemented using hashtables.
@@ -271,13 +272,13 @@ structure MVarId where
 instance : Repr MVarId where
   reprPrec n p := reprPrec n.name p
 
-def MVarIdSet := RBTree MVarId (Name.quickCmp ·.name ·.name)
+def MVarIdSet := TreeSet MVarId (Name.quickCmp ·.name ·.name)
   deriving Inhabited, EmptyCollection
 
 def MVarIdSet.insert (s : MVarIdSet) (mvarId : MVarId) : MVarIdSet :=
-  RBTree.insert s mvarId
+  TreeSet.insert s mvarId
 
-instance : ForIn m MVarIdSet MVarId := inferInstanceAs (ForIn _ (RBTree ..) ..)
+instance : ForIn m MVarIdSet MVarId := inferInstanceAs (ForIn _ (TreeSet ..) ..)
 
 def MVarIdMap (α : Type) := TreeMap MVarId α (Name.quickCmp ·.name ·.name)
 

@@ -14,7 +14,7 @@ open Elab
 open Lean.Lsp
 open Meta
 open FuzzyMatching
-open Std (TreeMap)
+open Std (TreeMap TreeSet)
 
 section Infrastructure
 
@@ -323,14 +323,14 @@ section DotCompletionUtils
   strip the private prefix from deep in the name, letting us reject most names without
   having to scan the full name first.
   -/
-  private def NameSetModPrivate := RBTree Name cmpModPrivate
+  private def NameSetModPrivate := TreeSet Name cmpModPrivate
 
   /--
     Given a type, try to extract relevant type names for dot notation field completion.
     We extract the type name, parent struct names, and unfold the type.
     The process mimics the dot notation elaboration procedure at `App.lean` -/
   private partial def getDotCompletionTypeNames (type : Expr) : MetaM NameSetModPrivate :=
-    return (← visit type |>.run RBTree.empty).2
+    return (← visit type |>.run TreeSet.empty).2
   where
     visit (type : Expr) : StateRefT NameSetModPrivate MetaM Unit := do
       let .const typeName _ := type.getAppFn | return ()
@@ -469,7 +469,7 @@ def dotCompletion
     let nameSet ← try
       getDotCompletionTypeNames (← instantiateMVars (← inferType info.expr))
     catch _ =>
-      pure RBTree.empty
+      pure TreeSet.empty
     if nameSet.isEmpty then
       return
 
@@ -504,7 +504,7 @@ def dotIdCompletion
     let nameSet ← try
       getDotCompletionTypeNames resultTypeFn
     catch _ =>
-      pure RBTree.empty
+      pure TreeSet.empty
 
     forEligibleDeclsM fun declName c => do
       let unnormedTypeName := declName.getPrefix
