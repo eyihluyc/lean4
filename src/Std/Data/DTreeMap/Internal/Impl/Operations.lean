@@ -620,6 +620,20 @@ def foldlM [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) : Impl 
 def foldl (f : δ → (a : α) → β a → δ) (init : δ) (t : Impl α β) : δ :=
   Id.run (t.foldlM f init)
 
+/-- Folds the given function over the mappings in the tree in descending order. -/
+@[specialize]
+def foldrM [Monad m] (f : δ → (a : α) → β a → m δ) (init : δ) : Impl α β → m δ
+  | .leaf => pure init
+  | .inner _ k v l r => do
+    let right ← foldlM f init r
+    let middle ← f right k v
+    foldlM f middle l
+
+/-- Folds the given function over the mappings in the tree in descending order. -/
+@[inline]
+def foldr (f : δ → (a : α) → β a → δ) (init : δ) (t : Impl α β) : δ :=
+  Id.run (t.foldrM f init)
+
 /-- Applies the given function to the mappings in the tree in ascending order. -/
 @[inline]
 def forM [Monad m] (f : (a : α) → β a → m PUnit) (t : Impl α β) : m PUnit :=

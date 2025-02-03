@@ -73,6 +73,10 @@ instance : EmptyCollection (TreeSet α cmp) where
 def isEmpty (t : TreeSet α cmp) : Bool :=
   t.inner.isEmpty
 
+@[inline, inherit_doc Raw.isSingleton]
+def isSingleton (t : TreeSet α cmp) : Bool :=
+  t.inner.isSingleton
+
 @[inline, inherit_doc Raw.insert]
 def insert (l : TreeSet α cmp) (a : α) : TreeSet α cmp :=
   ⟨l.inner.insert a ()⟩
@@ -105,11 +109,69 @@ def containsThenInsertIfNew (t : TreeSet α cmp) (a : α) :
   let p := t.inner.containsThenInsertIfNew a ()
   (p.1, ⟨p.2⟩)
 
+universe w
+
+@[inline, inherit_doc Raw.forM]
+def forM {m} [Monad m] (f : α → m PUnit) (t : TreeSet α cmp) : m PUnit :=
+  t.inner.forM (fun a _ => f a)
+
+@[inline, inherit_doc Raw.forIn] def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : α → γ → m (ForInStep γ)) (init : γ) (b : TreeSet α cmp) : m γ :=
+  b.inner.forIn (fun a _ c => f a c) init
+
+instance {m : Type w → Type w} : ForIn m (TreeSet α cmp) α where
+  forIn m init f := m.forIn (fun a acc => f a acc) init
+
+@[inline, inherit_doc Raw.any]
+def any (l : TreeSet α cmp) (p : α → Bool) : Bool :=
+  l.inner.any (fun a _ => p a)
+
+@[inline, inherit_doc Raw.all]
+def all (l : TreeSet α cmp) (p : α → Bool) : Bool :=
+  l.inner.all (fun a _ => p a)
+
+@[inline, inherit_doc Raw.foldlM]
+def foldlM {m δ} [Monad m] (f : δ → (a : α) → m δ) (init : δ) (t : TreeSet α cmp) : m δ :=
+  t.inner.foldlM (fun c a _ => f c a) init
+
+@[inline, inherit_doc Raw.foldl]
+def foldl {γ : Type w}
+    (f : γ → (a : α) → γ) (init : γ) (b : TreeSet α cmp) : γ :=
+  b.inner.foldl (fun c a _ => f c a) init
+
+@[inline, inherit_doc Raw.toList]
+def toList (t : TreeSet α cmp) : List α :=
+  t.inner.inner.inner.foldr (fun l a _ => a :: l) ∅
+
+@[inline, inherit_doc Raw.fromList]
+def fromList (l : List α) : TreeSet α cmp :=
+  l.foldl (fun r a => r.insert a) ∅
+
+@[inline, inherit_doc Raw.toArray]
+def toArray (t : TreeSet α cmp) : Array α :=
+  t.foldl (init := ∅) fun acc k => acc.push k
+
+@[inline, inherit_doc Raw.fromArray]
+def fromArray (l : Array α) (cmp : α → α → Ordering) : TreeSet α cmp :=
+  l.foldl (fun t a => t.insert a) ∅
+
+@[inline]
+def merge (t₁ t₂ : TreeSet α cmp) : TreeSet α cmp :=
+  ⟨TreeMap.mergeBy (fun _ _ _ => ()) t₁.inner t₂.inner⟩
+
+def diff (t₁ t₂ : TreeSet α cmp) : TreeSet α cmp :=
+  t₂.foldl .erase t₁
+
+def filter (f : α → Bool) (m : TreeSet α cmp) : TreeSet α cmp :=
+  ⟨m.inner.filter fun a _ => f a⟩
+
 instance : Membership α (TreeSet α cmp) where
   mem m a := m.contains a
 
 instance {m : TreeSet α cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
+
+instance : Inhabited (TreeSet α cmp) := ⟨empty⟩
 
 end TreeSet
 

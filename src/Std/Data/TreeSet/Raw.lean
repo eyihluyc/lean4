@@ -95,6 +95,10 @@ Returns `true` if the tree set contains no mappings.
 def isEmpty (t : Raw α cmp) : Bool :=
   t.inner.isEmpty
 
+@[inline]
+def isSingleton (t : Raw α cmp) : Bool :=
+  t.inner.isSingleton
+
 /--
 Inserts the given element into the set. If `a` or an element that is equal according to the
 comparator `cmp`, then the existing element will be replaced.
@@ -150,7 +154,7 @@ def containsThenInsert (t : Raw α cmp) (a : α) : Bool × Raw α cmp :=
 Inserts the given element into the set. If the tree set already contains an element that is
 equal (with regard to `==`) to the given element, then the tree set is returned unchanged.
 
-Note: this non-replacement behavior is true for `TreeSet` and `TreeSet.Raw`.
+Note: this non-replacement behavior is true for `Raw` and `Raw.Raw`.
 The `insert` function on `TreeMap`, `DTreeMap`, `TreeMap.Raw` and `DTreeMap.Raw` behaves
 differently: it will overwrite an existing mapping.
 -/
@@ -172,11 +176,70 @@ def containsThenInsertIfNew (t : Raw α cmp) (a : α) :
   let p := t.inner.containsThenInsertIfNew a ()
   (p.1, ⟨p.2⟩)
 
+universe w
+
+@[inline]
+def forM {m} [Monad m] (f : α → m PUnit) (t : Raw α cmp) : m PUnit :=
+  t.inner.forM (fun a _ => f a)
+
+@[inline]
+def forIn {m : Type w → Type w} [Monad m]
+    {γ : Type w} (f : α → γ → m (ForInStep γ)) (init : γ) (b : Raw α cmp) : m γ :=
+  b.inner.forIn (fun a _ c => f a c) init
+
+instance {m : Type w → Type w} : ForIn m (Raw α cmp) α where
+  forIn m init f := m.forIn (fun a acc => f a acc) init
+
+@[inline]
+def any (l : Raw α cmp) (p : α → Bool) : Bool :=
+  l.inner.any (fun a _ => p a)
+
+@[inline]
+def all (l : Raw α cmp) (p : α → Bool) : Bool :=
+  l.inner.all (fun a _ => p a)
+
+@[inline]
+def foldlM {m δ} [Monad m] (f : δ → (a : α) → m δ) (init : δ) (t : Raw α cmp) : m δ :=
+  t.inner.foldlM (fun c a _ => f c a) init
+
+@[inline]
+def foldl {γ : Type w}
+    (f : γ → (a : α) → γ) (init : γ) (b : Raw α cmp) : γ :=
+  b.inner.foldl (fun c a _ => f c a) init
+
+@[inline]
+def toList (t : Raw α cmp) : List α :=
+  t.inner.inner.inner.foldr (fun l a _ => a :: l) ∅
+
+@[inline]
+def fromList (l : List α) (cmp : α → α → Ordering) : Raw α cmp :=
+  l.foldl (fun r a => r.insert a) ∅
+
+@[inline]
+def toArray (t : Raw α cmp) : Array α :=
+  t.foldl (init := ∅) fun acc k => acc.push k
+
+@[inline]
+def fromArray (l : Array α) : Raw α cmp :=
+  l.foldl (fun t a => t.insert a) ∅
+
+@[inline]
+def merge (t₁ t₂ : Raw α cmp) : Raw α cmp :=
+  ⟨TreeMap.Raw.mergeBy (fun _ _ _ => ()) t₁.inner t₂.inner⟩
+
+def diff (t₁ t₂ : Raw α cmp) : Raw α cmp :=
+  t₂.foldl .erase t₁
+
+def filter (f : α → Bool) (m : Raw α cmp) : Raw α cmp :=
+  ⟨m.inner.filter fun a _ => f a⟩
+
 instance : Membership α (Raw α cmp) where
   mem m a := m.contains a
 
 instance {m : Raw α cmp} {a : α} : Decidable (a ∈ m) :=
   show Decidable (m.contains a) from inferInstance
+
+instance : Inhabited (Raw α cmp) := ⟨empty⟩
 
 end Raw
 

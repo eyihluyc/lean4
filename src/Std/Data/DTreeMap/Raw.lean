@@ -298,7 +298,7 @@ def toArray (t : Raw α (fun _ => β) cmp) : Array (α × β) :=
   t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
 
 @[inline]
-def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : Raw α (fun _ => β) cmp :=
+def fromArray (l : Array (α × β)) : Raw α (fun _ => β) cmp :=
   l.foldl (fun t e => t.insert e.1 e.2) ∅
 
 end Const

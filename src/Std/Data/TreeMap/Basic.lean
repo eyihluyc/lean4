@@ -179,7 +179,7 @@ def toArray (t : TreeMap α β cmp) : Array (α × β) :=
   t.foldl (init := ∅) fun acc k v => acc.push ⟨k,v⟩
 
 @[inline, inherit_doc TreeMap.fromArray]
-def fromArray (l : Array (α × β)) (cmp : α → α → Ordering) : TreeMap α β cmp :=
+def fromArray (l : Array (α × β)) : TreeMap α β cmp :=
   l.foldl (fun t e => t.insert e.1 e.2) ∅
 
 @[inline, inherit_doc TreeMap.mergeBy]
