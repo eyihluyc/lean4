@@ -489,7 +489,7 @@ section NotificationHandling
 def handleRpcRelease (p : Lsp.RpcReleaseParams) : WorkerM Unit := do
   -- NOTE(WN): when the worker restarts e.g. due to changed imports, we may receive `rpc/release`
   -- for the previous RPC session. This is fine, just ignore.
-  if let some seshRef := (← get).rpcSessions.find? p.sessionId then
+  if let some seshRef := (← get).rpcSessions.get? p.sessionId then
     let monoMsNow ← IO.monoMsNow
     let discardRefs : StateM RpcObjectStore Unit := do
       for ref in p.refs do
@@ -500,7 +500,7 @@ def handleRpcRelease (p : Lsp.RpcReleaseParams) : WorkerM Unit := do
       { st with objects }
 
 def handleRpcKeepAlive (p : Lsp.RpcKeepAliveParams) : WorkerM Unit := do
-  match (← get).rpcSessions.find? p.sessionId with
+  match (← get).rpcSessions.get? p.sessionId with
   | none => return
   | some seshRef =>
     seshRef.modify (·.keptAlive (← IO.monoMsNow))
@@ -607,7 +607,7 @@ section MessageHandling
         let params ← parseParams Lsp.RpcCallParams params
         -- needs access to `EditableDocumentCore.diagnosticsRef`
         if params.method == `Lean.Widget.getInteractiveDiagnostics then
-          let some seshRef := st.rpcSessions.find? params.sessionId
+          let some seshRef := st.rpcSessions.get? params.sessionId
             | ctx.chanOut.send <| .responseError id .rpcNeedsReconnect "Outdated RPC session" none
           let params ← IO.ofExcept (fromJson? params.params)
           let resp ← handleGetInteractiveDiagnosticsRequest params

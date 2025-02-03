@@ -187,13 +187,13 @@ section ServerM
   /-- Updates `d` with the new set of `imports` for the file `uri`. -/
   def ImportData.update (d : ImportData) (uri : DocumentUri) (imports : TreeSet DocumentUri compare)
       : ImportData := Id.run do
-    let oldImports     := d.imports.findD uri ∅
+    let oldImports     := d.imports.getD uri ∅
     let removedImports := oldImports.diff imports
     let addedImports   := imports.diff oldImports
     let mut importedBy := d.importedBy
 
     for removedImport in removedImports do
-      let importedByRemovedImport' := importedBy.find! removedImport |>.erase uri
+      let importedByRemovedImport' := importedBy.get! removedImport |>.erase uri
       if importedByRemovedImport'.isEmpty then
         importedBy := importedBy.erase removedImport
       else
@@ -201,7 +201,7 @@ section ServerM
 
     for addedImport in addedImports do
       importedBy :=
-        importedBy.findD addedImport ∅
+        importedBy.getD addedImport ∅
           |>.insert uri
           |> importedBy.insert addedImport
 
@@ -245,7 +245,7 @@ section ServerM
       (data     : ServerRequestData)
       (globalID : RequestID)
       : Option RequestIDTranslation × ServerRequestData :=
-    let translation? := data.pendingServerRequests.find? globalID
+    let translation? := data.pendingServerRequests.get? globalID
     let data := { data with pendingServerRequests := data.pendingServerRequests.erase globalID }
     (translation?, data)
 
@@ -270,7 +270,7 @@ section ServerM
     (←read).fileWorkersRef.modify (fun fileWorkers => fileWorkers.insert val.doc.uri val)
 
   def findFileWorker? (uri : DocumentUri) : ServerM (Option FileWorker) :=
-    return (← (←read).fileWorkersRef.get).find? uri
+    return (← (←read).fileWorkersRef.get).get? uri
 
   def eraseFileWorker (uri : DocumentUri) : ServerM Unit := do
     let s ← read
@@ -800,7 +800,7 @@ section NotificationHandling
     let s ← read
     let fileWorkers ← s.fileWorkersRef.get
     let importData  ← s.importData.get
-    let dependents := importData.importedBy.findD p.textDocument.uri ∅
+    let dependents := importData.importedBy.getD p.textDocument.uri ∅
 
     for ⟨uri, _⟩ in fileWorkers do
       if ! dependents.contains uri then
@@ -817,7 +817,7 @@ section NotificationHandling
     if ! leanChanges.isEmpty then
       let importData ← (← read).importData.get
       for (c, _) in leanChanges do
-        let dependents := importData.importedBy.findD c.uri ∅
+        let dependents := importData.importedBy.getD c.uri ∅
         for dependent in dependents do
           notifyAboutStaleDependency dependent c.uri
     if ! ileanChanges.isEmpty then

@@ -548,7 +548,7 @@ partial def collectSyntaxBasedSemanticTokens : (stx : Syntax) → Array LeanSema
     let isHashKeyword := val.length > 1 && val.front == '#' && (val.get ⟨1⟩).isAlpha
     if ! isRegularKeyword && ! isHashKeyword then
       return tokens
-    return tokens.push ⟨stx, keywordSemanticTokenMap.findD val .keyword⟩
+    return tokens.push ⟨stx, keywordSemanticTokenMap.getD val .keyword⟩
 
 /-- Collects all semantic tokens from the given `Elab.InfoTree`. -/
 def collectInfoBasedSemanticTokens (i : Elab.InfoTree) : Array LeanSemanticToken :=

@@ -110,7 +110,7 @@ private def accumulate (s' : LiveVarSet) : Collector :=
   fun s => s'.foldl (fun s x => s.insert x) s
 
 private def collectJP (m : JPLiveVarMap) (j : JoinPointId) : Collector :=
-  match m.find? j with
+  match m.get? j with
   | some xs => accumulate xs
   | none    => skip -- unreachable for well-formed code
 

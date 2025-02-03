@@ -94,9 +94,9 @@ builtin_initialize widgetModuleAttrImpl : AttributeImpl ←
         let mod ← evalModule e
         let env ← getEnv
         unless builtin do  -- don't warn on collision between previous and current stage
-          if let some _ := (← builtinModulesRef.get).find? mod.javascriptHash then
+          if let some _ := (← builtinModulesRef.get).get? mod.javascriptHash then
             logWarning m!"A builtin widget module with the same hash(JS source code) was already registered."
-        if let some (n, _) := moduleRegistry.getState env |>.find? mod.javascriptHash then
+        if let some (n, _) := moduleRegistry.getState env |>.get? mod.javascriptHash then
           logWarning m!"A widget module with the same hash(JS source code) was already registered at {.ofConstName n true}."
         let env ← getEnv
         if builtin then
@@ -128,7 +128,7 @@ structure WidgetSource where
 
 open Server RequestM in
 def getWidgetSource (args : GetWidgetSourceParams) : RequestM (RequestTask WidgetSource) := do
-  if let some (_, m) := (← builtinModulesRef.get).find? args.hash then
+  if let some (_, m) := (← builtinModulesRef.get).get? args.hash then
     return .pure { sourcetext := m.javascript }
 
   let doc ← readDoc
@@ -137,7 +137,7 @@ def getWidgetSource (args : GetWidgetSourceParams) : RequestM (RequestTask Widge
   withWaitFindSnap doc (notFoundX := notFound)
     (fun s => s.endPos >= pos || (moduleRegistry.getState s.env).contains args.hash)
     fun snap => do
-      if let some (_, e) := moduleRegistry.getState snap.env |>.find? args.hash then
+      if let some (_, e) := moduleRegistry.getState snap.env |>.get? args.hash then
         runTermElabM snap do
           return { sourcetext := (← evalModule e).javascript }
       else
@@ -187,7 +187,7 @@ private abbrev PanelWidgetsExt := SimpleScopedEnvExtension
 
 builtin_initialize panelWidgetsExt : PanelWidgetsExt ←
   registerSimpleScopedEnvExtension {
-    addEntry := fun s (h, n) => s.insert h (.global n :: s.findD h [])
+    addEntry := fun s (h, n) => s.insert h (.global n :: s.getD h [])
     initial  := .empty
   }
 
@@ -210,7 +210,7 @@ def addPanelWidgetScoped [Monad m] [MonadEnv m] [MonadResolveName m] (h : UInt64
 
 def addPanelWidgetLocal [Monad m] [MonadEnv m] (wi : WidgetInstance) : m Unit := do
   modifyEnv fun env => panelWidgetsExt.modifyState env fun s =>
-    s.insert wi.javascriptHash (.local wi :: s.findD wi.javascriptHash [])
+    s.insert wi.javascriptHash (.local wi :: s.getD wi.javascriptHash [])
 
 def erasePanelWidget [Monad m] [MonadEnv m] (h : UInt64) : m Unit := do
   modifyEnv fun env => panelWidgetsExt.modifyState env fun st => st.erase h
@@ -226,7 +226,7 @@ def WidgetInstance.ofHash (hash : UInt64) (props : StateM Server.RpcObjectStore 
   let env ← getEnv
   let builtins ← builtinModulesRef.get
   let some id :=
-    (builtins.find? hash |>.map (·.1)) <|> (moduleRegistry.getState env |>.find? hash |>.map (·.1))
+    (builtins.get? hash |>.map (·.1)) <|> (moduleRegistry.getState env |>.get? hash |>.map (·.1))
     | throwError s!"No widget module with hash {hash} registered"
   return { id, javascriptHash := hash, props }
 

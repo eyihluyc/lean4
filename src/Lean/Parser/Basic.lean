@@ -1583,7 +1583,7 @@ def TokenMap (α : Type) := TreeMap Name (List α) Name.quickCmp
 namespace TokenMap
 
 def insert (map : TokenMap α) (k : Name) (v : α) : TokenMap α :=
-  match map.find? k with
+  match map.get? k with
   | none    => TreeMap.insert map k [v]
   | some vs => TreeMap.insert map k (v::vs)
 
@@ -1673,7 +1673,7 @@ abbrev ParserCategories := PersistentHashMap Name ParserCategory
 def indexed {α : Type} (map : TokenMap α) (c : ParserContext) (s : ParserState) (behavior : LeadingIdentBehavior) : ParserState × List α :=
   let (s, stx) := peekToken c s
   let find (n : Name) : ParserState × List α :=
-    match map.find? n with
+    match map.get? n with
     | some as => (s, as)
     | _       => (s, [])
   match stx with
@@ -1682,16 +1682,16 @@ def indexed {α : Type} (map : TokenMap α) (c : ParserContext) (s : ParserState
     match behavior with
     | .default => find identKind
     | .symbol =>
-      match map.find? val with
+      match map.get? val with
       | some as => (s, as)
       | none    => find identKind
     | .both =>
-      match map.find? val with
+      match map.get? val with
       | some as =>
         if val == identKind then
           (s, as)  -- avoid running the same parsers twice
         else
-          match map.find? identKind with
+          match map.get? identKind with
           | some as' => (s, as ++ as')
           | _        => (s, as)
       | none    => find identKind

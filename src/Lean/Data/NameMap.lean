@@ -31,7 +31,7 @@ def insert (m : NameMap α) (n : Name) (a : α) := TreeMap.insert m n a
 
 def contains (m : NameMap α) (n : Name) : Bool := TreeMap.contains m n
 
-def find? (m : NameMap α) (n : Name) : Option α := TreeMap.find? m n
+def find? (m : NameMap α) (n : Name) : Option α := TreeMap.get? m n
 
 instance : ForIn m (NameMap α) (Name × α) :=
   inferInstanceAs (ForIn _ (TreeMap ..) ..)

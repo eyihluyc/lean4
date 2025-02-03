@@ -1570,7 +1570,7 @@ mutual
       -- semantic no-op that replaces the `uvars`' position information (which all point inside the loop)
       -- with that of the respective mutable declarations outside the loop, which allows the language
       -- server to identify them as conceptually identical variables
-      let uvars := uvars.map fun v => ctx.mutableVars.findD v.getId v
+      let uvars := uvars.map fun v => ctx.mutableVars.getD v.getId v
       let uvarsTuple ← liftMacroM do mkTuple uvars
       if hasReturn forInBodyCodeBlock.code then
         let forInBody ← liftMacroM <| destructTuple uvars (← `(r)) forInBody

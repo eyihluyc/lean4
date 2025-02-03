@@ -167,7 +167,7 @@ builtin_initialize tacticTagExt
   registerPersistentEnvExtension {
     mkInitial := pure {},
     addImportedFn := fun _ => pure {},
-    addEntryFn := fun tags (decl, newTag) => tags.insert decl (tags.findD decl {} |>.insert newTag)
+    addEntryFn := fun tags (decl, newTag) => tags.insert decl (tags.getD decl {} |>.insert newTag)
     exportEntriesFn := fun tags => Id.run do
       let mut exported := #[]
       for (decl, dTags) in tags do
@@ -234,7 +234,7 @@ builtin_initialize tacticDocExtExt
   registerPersistentEnvExtension {
     mkInitial := pure {},
     addImportedFn := fun _ => pure {},
-    addEntryFn := fun es (x, ext) => es.insert x (es.findD x #[] |>.push ext),
+    addEntryFn := fun es (x, ext) => es.insert x (es.getD x #[] |>.push ext),
     exportEntriesFn := fun es =>
       es.foldl (fun a src tgt => a.push (src, tgt)) #[] |>.qsort (Name.quickLt ·.1 ·.1)
   }

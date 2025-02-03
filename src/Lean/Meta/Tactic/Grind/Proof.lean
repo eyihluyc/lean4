@@ -62,7 +62,7 @@ private def findCommon (lhs rhs : Expr) : GoalM Expr := do
   it := rhs
   repeat
     let n ← getENode it
-    if let some common := visited.find? n.idx then
+    if let some common := visited.get? n.idx then
       return common
     let some target := n.target? | unreachable! --
     it := target

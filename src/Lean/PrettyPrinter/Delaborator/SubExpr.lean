@@ -19,7 +19,7 @@ open Std (TreeMap)
 abbrev OptionsPerPos := TreeMap SubExpr.Pos Options compare
 
 def OptionsPerPos.insertAt (optionsPerPos : OptionsPerPos) (pos : SubExpr.Pos) (name : Name) (value : DataValue) : OptionsPerPos :=
-  let opts := optionsPerPos.find? pos |>.getD {}
+  let opts := optionsPerPos.get? pos |>.getD {}
   optionsPerPos.insert pos <| opts.insert name value
 
 /-- Merges two collections of options, where the second overrides the first. -/
