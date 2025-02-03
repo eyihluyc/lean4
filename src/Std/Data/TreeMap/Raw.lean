@@ -9,14 +9,14 @@ import Std.Data.DTreeMap.Raw
 /-
 # Tree maps with unbundled well-formedness invariant
 
-This file develops the type `Std.Data.TreeMap.Raw` of tree maps with unbundled
+This file develops the type `Std.TreeMap.Raw` of tree maps with unbundled
 well-formedness invariant.
 
 This version is safe to use in nested inductive types. The well-formedness predicate is
-available as `Std.Data.TreeMap.Raw.WF` and we prove in this file that all operations preserve
+available as `Std.TreeMap.Raw.WF` and we prove in this file that all operations preserve
 well-formedness. When in doubt, prefer `TreeMap` over `TreeMap.Raw`.
 
-Lemmas about the operations on `Std.Data.TreeMap.Raw` are available in the module
+Lemmas about the operations on `Std.TreeMap.Raw` are available in the module
 `Std.Data.TreeMap.RawLemmas`.
 -/
 
@@ -34,7 +34,7 @@ namespace TreeMap
 /--
 Tree maps without a bundled well-formedness invariant, suitable for use in nested
 inductive types. The well-formedness invariant is called `Raw.WF`. When in doubt, prefer `TreeMap`
-over `TreeMap.Raw`. Lemmas about the operations on `Std.Data.TreeMap.Raw` are available in the
+over `TreeMap.Raw`. Lemmas about the operations on `Std.TreeMap.Raw` are available in the
 module `Std.Data.TreeMap.RawLemmas`.
 
 A tree map stores an assignment of keys to values. It depends on a comparator function that
@@ -129,19 +129,19 @@ def containsThenInsertIfNew (t : Raw α β cmp) (a : α) (b : β) :
   let p := t.inner.containsThenInsertIfNew a b
   (p.1, ⟨p.2⟩)
 
-@[inline, inherit_doc DTreeMap.Raw.get?]
+@[inline, inherit_doc DTreeMap.Raw.Const.get?]
 def get? (t : Raw α β cmp) (a : α) : Option β :=
   DTreeMap.Raw.Const.get? t.inner a
 
-@[inline, inherit_doc DTreeMap.Raw.get]
+@[inline, inherit_doc DTreeMap.Raw.Const.get]
 def get (l : Raw α β cmp) (a : α) (h : l.contains a) : β :=
   DTreeMap.Raw.Const.get l.inner a h
 
-@[inline, inherit_doc DTreeMap.Raw.get!]
+@[inline, inherit_doc DTreeMap.Raw.Const.get!]
 def get! (l : Raw α β cmp) (a : α) [Inhabited β]  : β :=
   DTreeMap.Raw.Const.get! l.inner a
 
-@[inline]
+@[inline, inherit_doc DTreeMap.Raw.Const.getD]
 def getD (l : Raw α β cmp) (a : α) (fallback : β) : β :=
   DTreeMap.Raw.Const.getD l.inner a fallback
 
@@ -154,6 +154,9 @@ def forM {m} [Monad m] (f : α → β → m PUnit) (t : Raw α β cmp) : m PUnit
 @[inline, inherit_doc DTreeMap.Raw.forIn] def forIn {m : Type w → Type w} [Monad m]
     {γ : Type w} (f : α → β → γ → m (ForInStep γ)) (init : γ) (b : Raw α β cmp) : m γ :=
   b.inner.forIn (fun a b c => f a b c) init
+
+instance {m : Type w → Type w} : ForM m (Raw α β cmp) (α × β) where
+  forM m f := m.forM (fun a b => f ⟨a, b⟩)
 
 instance {m : Type w → Type w} : ForIn m (Raw α β cmp) (α × β) where
   forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init

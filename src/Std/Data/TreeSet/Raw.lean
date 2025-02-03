@@ -9,14 +9,14 @@ import Std.Data.TreeMap.Raw
 /-
 # Tree sets with unbundled well-formedness invariant
 
-This file develops the type `Std.Data.TreeSet.Raw` of tree sets with unbundled
+This file develops the type `Std.TreeSet.Raw` of tree sets with unbundled
 well-formedness invariant.
 
 This version is safe to use in nested inductive types. The well-formedness predicate is
-available as `Std.Data.TreeSet.Raw.WF` and we prove in this file that all operations preserve
+available as `Std.TreeSet.Raw.WF` and we prove in this file that all operations preserve
 well-formedness. When in doubt, prefer `TreeSet` over `TreeSet.Raw`.
 
-Lemmas about the operations on `Std.Data.TreeSet.Raw` are available in the module
+Lemmas about the operations on `Std.TreeSet.Raw` are available in the module
 `Std.Data.TreeSet.RawLemmas`.
 -/
 
@@ -34,7 +34,7 @@ namespace TreeSet
 /--
 Tree sets without a bundled well-formedness invariant, suitable for use in nested
 inductive types. The well-formedness invariant is called `Raw.WF`. When in doubt, prefer `TreeSet`
-over `TreeSet.Raw`. Lemmas about the operations on `Std.Data.TreeSet.Raw` are available in the
+over `TreeSet.Raw`. Lemmas about the operations on `Std.TreeSet.Raw` are available in the
 module `Std.Data.TreeSet.RawLemmas`.
 
 A tree set stores elements of a certain type in a certain order. It depends on a comparator function
@@ -49,8 +49,8 @@ and vice versa (see the `OrientedCmp` typeclass)
 * If `a` is less than or equal to `b` and `b` is, in turn, less than or equal to `c`, then `a`
 id less than or equal to `c` (see the `TransCmp` typeclass).
 
-Keys for which `cmp a b = Ordering.eq` are considered the same, i.e there can be only one of them
-be contained in a single tree set at the same time.
+Keys for which `cmp a b = Ordering.eq` are considered the same, i.e only one of them
+can be contained in a single tree set at the same time.
 
 To avoid expensive copies, users should make sure that the tree map is used linearly to avoid
 expensive copies.
@@ -58,7 +58,7 @@ expensive copies.
 Internally, the tree sets are represented as weight-balanced trees.
 -/
 structure Raw (α : Type u) (cmp : α → α → Ordering) where
-  /-- Internal implementation detail of the tree map. -/
+  /-- Internal implementation detail of the tree set. -/
   inner : TreeMap.Raw α Unit cmp
 
 namespace Raw
@@ -95,6 +95,9 @@ Returns `true` if the tree set contains no mappings.
 def isEmpty (t : Raw α cmp) : Bool :=
   t.inner.isEmpty
 
+/--
+Returns true if the tree set contains exactly one element.
+-/
 @[inline]
 def isSingleton (t : Raw α cmp) : Bool :=
   t.inner.isSingleton

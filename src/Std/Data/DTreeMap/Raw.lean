@@ -9,14 +9,14 @@ import Std.Data.DTreeMap.Internal.Impl
 /-
 # Dependent tree maps with unbundled well-formedness invariant
 
-This file develops the type `Std.Data.DTreeMap.Raw` of dependent tree maps with unbundled
+This file develops the type `Std.DTreeMap.Raw` of dependent tree maps with unbundled
 well-formedness invariant.
 
 This version is safe to use in nested inductive types. The well-formedness predicate is
-available as `Std.Data.DTreeMap.Raw.WF` and we prove in this file that all operations preserve
+available as `Std.DTreeMap.Raw.WF` and we prove in this file that all operations preserve
 well-formedness. When in doubt, prefer `DTreeMap` over `DTreeMap.Raw`.
 
-Lemmas about the operations on `Std.Data.DTreeMap.Raw` are available in the module
+Lemmas about the operations on `Std.DTreeMap.Raw` are available in the module
 `Std.Data.DTreeMap.RawLemmas`.
 -/
 
@@ -34,7 +34,7 @@ namespace DTreeMap
 /--
 Dependent tree maps without a bundled well-formedness invariant, suitable for use in nested
 inductive types. The well-formedness invariant is called `Raw.WF`. When in doubt, prefer `DTreeMap`
-over `DTreeMap.Raw`. Lemmas about the operations on `Std.Data.DTreeMap.Raw` are available in the
+over `DTreeMap.Raw`. Lemmas about the operations on `Std.DTreeMap.Raw` are available in the
 module `Std.Data.DTreeMap.RawLemmas`.
 
 A tree map stores an assignment of keys to values. It depends on a comparator function that
@@ -52,18 +52,13 @@ id less than or equal to `c` (see the `TransCmp` typeclass).
 Keys for which `cmp a b = Ordering.eq` are considered the same, i.e there can be only one entry
 with key either `a` or `b` in a tree map. Looking up either `a` or `b` always yield the same entry,
 if any is present. The `get` operations of the _dependent_ tree map additionally require a
-`LawfulEqOrd` instance to ensure that `cmp a b = .eq` always implies `a = b`, and therefore their
+`LawfulEqCmp` instance to ensure that `cmp a b = .eq` always implies `a = b`, and therefore their
 respective value types are equal.
 
 To avoid expensive copies, users should make sure that the tree map is used linearly to avoid
 expensive copies.
 
 Internally, the tree maps are represented as weight-balanced trees.
-
-These tree maps contain a bundled well-formedness invariant, which means that they cannot
-be used in nested inductive types. For these use cases, `Std.Data.DTreeMap.Raw` and
-`Std.Data.DTreeMap.Raw.WF` unbundle the invariant from the tree map. When in doubt, prefer
-`DTreeMap` over `DTreeMap.Raw`.
 -/
 structure Raw (α : Type u) (β : α → Type v) (_cmp : α → α → Ordering) where
   /-- Internal implementation detail of the tree map. -/
@@ -102,6 +97,9 @@ Returns `true` if the tree map contains no mappings.
 def isEmpty (t : Raw α β cmp) : Bool :=
   t.inner.isEmpty
 
+/--
+Returns `true` if the tree map contains exactly one mapping.
+-/
 @[inline]
 def isSingleton (t : Raw α β cmp) : Bool :=
   t.inner.isSingleton
@@ -182,20 +180,35 @@ Equivalent to (but potentially faster than) calling `contains` followed by `inse
 /--
 Tries to retrieve the mapping for the given key, returning `none` if no such mapping is present.
 
-Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
+Uses the `LawfulEqCmp` instance to cast the retrieved value to the correct type.
 -/
 @[inline]
 def get? [LawfulEqCmp cmp] (t : Raw α β cmp) (a : α) : Option (β a) :=
   letI : Ord α := ⟨cmp⟩; t.inner.get? a
 
+/--
+Given a proof that a mapping for the given key is present, returns the value associated .
+
+Uses the `LawfulEqCmp` instance to cast the retrieved value to the correct type.
+-/
 @[inline]
 def get [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) (h : l.contains a) : β a :=
   letI : Ord α := ⟨cmp⟩; l.inner.get a h
 
+/--
+Tries to retrieve the mapping for the given key, panicking if no such mapping is present.
+
+Uses the `LawfulEqCmp` instance to cast the retrieved value to the correct type.
+-/
 @[inline]
 def get! [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) [Inhabited (β a)]  : β a :=
   letI : Ord α := ⟨cmp⟩; l.inner.get! a
 
+/--
+Tries to retrieve the mapping for the given key, returning `fallback` if no such mapping is present.
+
+Uses the `LawfulEqCmp` instance to cast the retrieved value to the correct type.
+-/
 @[inline]
 def getD [LawfulEqCmp cmp] (l : Raw α β cmp) (a : α) (fallback : β a) : β a :=
   letI : Ord α := ⟨cmp⟩; l.inner.getD a fallback
@@ -206,21 +219,31 @@ open Internal
 variable {β : Type v}
 
 /--
-Tries to retrieve the mapping for the given key, returning `none` if no such mapping is present.
-
-Uses the `LawfulEqOrd` instance to cast the retrieved value to the correct type.
+Retrieves the mapping for the given key. Ensures that such a mapping exists by requiring a proof
+of `a ∈ m`.
 -/
 @[inline] def get? (t : Raw α (fun _ => β) cmp) (a : α) : Option β :=
   letI : Ord α := ⟨cmp⟩; Impl.Const.get? a t.inner -- TODO: Which order of arguments is correct?
 
+/--
+Given a proof that a mapping for the given key is present, returns the value associated .
+-/
 @[inline]
 def get (l : Raw α (fun _ => β) cmp) (a : α) (h : l.contains a) : β :=
   letI : Ord α := ⟨cmp⟩; Impl.Const.get a l.inner h
 
+
+/--
+Tries to retrieve the mapping for the given key, panicking if no such mapping is present.
+-/
 @[inline]
 def get! (l : Raw α (fun _ => β) cmp) (a : α) [Inhabited β] : β :=
   letI : Ord α := ⟨cmp⟩; Impl.Const.get! a l.inner
 
+
+/--
+Tries to retrieve the mapping for the given key, returning `fallback` if no such mapping is present.
+-/
 @[inline]
 def getD (l : Raw α (fun _ => β) cmp) (a : α) (fallback : β) : β :=
   letI : Ord α := ⟨cmp⟩; Impl.Const.getD a l.inner fallback
@@ -229,14 +252,19 @@ end Const
 
 universe w
 
+/-- Carries out a monadic action on each mapping in the hash map in ascending order. -/
 @[inline]
 def forM {m} [Monad m] (f : (a : α) → β a → m PUnit) (t : Raw α β cmp) : m PUnit :=
   t.inner.forM f
 
+/-- Support for the `for` loop construct in `do` blocks. Iteration happens in ascending order. -/
 @[inline]
 def forIn {m : Type w → Type w} [Monad m]
     {γ : Type w} (f : (a : α) → β a → γ → m (ForInStep γ)) (init : γ) (b : Raw α β cmp) : m γ :=
   b.inner.forIn (fun c a b => f a b c) init
+
+instance {m : Type w → Type w} : ForM m (Raw α β cmp) ((a : α) × β a) where
+  forM m f := m.forM (fun a b => f ⟨a, b⟩)
 
 instance {m : Type w → Type w} : ForIn m (Raw α β cmp) ((a : α) × β a) where
   forIn m init f := m.forIn (fun a b acc => f ⟨a, b⟩ acc) init
